@@ -1,0 +1,25 @@
+Admins: username, password.
+
+Contest: url, name, banner, start_date y end_date, payment, script/text, recommendations y voice_list.
+(CRUD con autenticacion) 
+
+ 
+Features - ContestId
+- Subir voces
+- Listar voces de forma descendente por creation_date y paginación de a 50 voces. 
+- Escuchar un voz sin iniciar sesión (no auth). 
+- Poder subir voz (con sus detalles). 
+- Solo deben aparecer en el listado las voces que esten en state="Convertido"
+
+
+Voice: voice_data (opción de descargar), email, name y last_name, creation_date, state = "En proceso" | "Convertida".
+Features - Voz:
+Reproducción de voz en caso de que esté en estado = "Convertido", en la página para cualquier persona (no login necesario).
+
+
+API:
+/auth - genera el token de autenticación
+/login - login, verifica usuario y contraseña
+/register - registra un nuevo usuario
+/signOut - logout
+/contests - llama a toda la lista de contests para un usuario
