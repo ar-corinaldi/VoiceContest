@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Row, Col, Badge, Descriptions } from "antd";
 import { Link, useParams } from "react-router-dom";
 import { LoadingOutlined } from "@ant-design/icons";
+import { doFetch } from "../utils/useFetch";
 const ContestDetail = ({ admin, setAdmin, token, setToken }) => {
   const [contest, setContest] = useState();
   const [isLoading, setIsLoading] = useState(true);
@@ -11,15 +12,16 @@ const ContestDetail = ({ admin, setAdmin, token, setToken }) => {
     async function getContest(id) {
       try {
         setIsLoading(true);
-        const res = await fetch(`/contests/${id}`);
-        const data = await res.json();
+        const data = doFetch(`/contests/${id}`, "GET", null, token);
         setContest(data);
+      } catch (e) {
+        console.error("error", e);
       } finally {
         setIsLoading(false);
       }
     }
     getContest(contestId);
-  }, [contestId, setContest]);
+  }, [contestId, setContest, token]);
 
   if (isLoading) {
     return (

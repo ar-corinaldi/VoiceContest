@@ -10,7 +10,7 @@ import {
   InputNumber,
 } from "antd";
 import { admin } from "../App";
-import { useHistory } from "react-router-dom";
+import { doFetch } from "../utils/useFetch";
 
 const layout = {
   labelCol: { span: 8 },
@@ -27,22 +27,15 @@ const Login = ({ admin, setAdmin, setToken, token }) => {
   const onFinish = async (values) => {
     console.log(JSON.stringify(values));
     try {
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-      const res = await fetch("/auth", {
-        method: "POST",
-        body: JSON.stringify(values),
-        headers: myHeaders,
-      });
-      console.log(res);
-      const data = await res.json();
-      console.log(data);
+      const promise = doFetch("/auth", "POST", values, token);
+      const data = await Promise.resolve(promise);
       if (data.description === "Invalid credentials") {
         setFormInfo(values);
         return showModal();
       }
       console.log(data);
       setToken(data.access_token);
+      setAdmin(values);
     } catch (e) {
       console.error("error", e);
     }
@@ -54,14 +47,8 @@ const Login = ({ admin, setAdmin, setToken, token }) => {
 
   const handleOk = async () => {
     setIsModalVisible(false);
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    const res = await fetch("/users", {
-      method: "POST",
-      body: JSON.stringify(formInfo),
-      headers: myHeaders,
-    });
-    const data = await res.json();
+    const data = await doFetch("/users", "POST", formInfo, token);
+
     if (data && !data.error && setAdmin) {
       setAdmin(data);
       onFinish(data);
