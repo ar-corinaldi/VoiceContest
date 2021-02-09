@@ -38,8 +38,9 @@ const Contests = ({ admin, setAdmin, token, setToken }) => {
 
   useEffect(() => {
     async function getContests() {
-      const newContests = doFetch("/contests", "GET", null, token);
-      setContests(newContests);
+      const newContests = await doFetch("/contests", "GET", null, token);
+      console.log(newContests);
+      // setContests(newContests);
     }
     try {
       setIsLoading(true);

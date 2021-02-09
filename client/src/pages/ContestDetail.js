@@ -12,8 +12,8 @@ const ContestDetail = ({ admin, setAdmin, token, setToken }) => {
     async function getContest(id) {
       try {
         setIsLoading(true);
-        const data = doFetch(`/contests/${id}`, "GET", null, token);
-        setContest(data);
+        const newContest = await doFetch(`/contests/${id}`, "GET", null, token);
+        setContest(newContest);
       } catch (e) {
         console.error("error", e);
       } finally {

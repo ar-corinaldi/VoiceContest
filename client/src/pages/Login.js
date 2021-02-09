@@ -27,8 +27,8 @@ const Login = ({ admin, setAdmin, setToken, token }) => {
   const onFinish = async (values) => {
     console.log(JSON.stringify(values));
     try {
-      const promise = doFetch("/auth", "POST", values, token);
-      const data = await Promise.resolve(promise);
+      const data = await doFetch("/auth", "POST", values, token);
+      console.log(data);
       if (data.description === "Invalid credentials") {
         setFormInfo(values);
         return showModal();
