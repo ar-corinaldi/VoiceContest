@@ -35,7 +35,11 @@ const Contests = ({ admin, setAdmin, token, setToken }) => {
 
   useEffect(() => {
     async function getContests() {
-      const data = await fetch("/contests");
+      // try {
+      // const res = await fetch("/contests");
+      // const data = await res.json();
+      // } finally {
+      // }
     }
   }, []);
 

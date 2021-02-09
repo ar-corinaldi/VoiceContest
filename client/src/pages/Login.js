@@ -25,43 +25,28 @@ const Login = ({ admin, setAdmin, setToken, token }) => {
   const [formInfo, setFormInfo] = useState({});
 
   const onFinish = async (values) => {
-    // const myHeaders = new Headers();
-    // myHeaders.append("Content-Type", "application/json");
-    // const res = await fetch("/login", {
-    //   method: "POST",
-    //   body: JSON.stringify(values),
-    //   headers: myHeaders,
-    // });
-    // const data = await res.json();
-    // if (data.error === "Email no existe, desea crear una cuenta nueva?") {
-    //   setFormInfo(values);
-    //   return showModal();
-    // }
-    getToken(values);
-    // if (data && !data.error && setAdmin) {
-    setAdmin(values);
-    // setAdmin(data);
-    // }
-  };
-
-  async function getToken(values) {
+    console.log(JSON.stringify(values));
     try {
       const myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
       const res = await fetch("/auth", {
         method: "POST",
-        body: JSON.stringify({
-          adminname: values.email,
-          password: values.password,
-        }),
+        body: JSON.stringify(values),
         headers: myHeaders,
       });
+      console.log(res);
       const data = await res.json();
+      console.log(data);
+      if (data.description === "Invalid credentials") {
+        setFormInfo(values);
+        return showModal();
+      }
+      console.log(data);
       setToken(data.access_token);
     } catch (e) {
-      console.error(e);
+      console.error("error", e);
     }
-  }
+  };
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -71,7 +56,7 @@ const Login = ({ admin, setAdmin, setToken, token }) => {
     setIsModalVisible(false);
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
-    const res = await fetch("/register", {
+    const res = await fetch("/users", {
       method: "POST",
       body: JSON.stringify(formInfo),
       headers: myHeaders,
@@ -79,7 +64,7 @@ const Login = ({ admin, setAdmin, setToken, token }) => {
     const data = await res.json();
     if (data && !data.error && setAdmin) {
       setAdmin(data);
-      getToken(formInfo);
+      onFinish(data);
     }
   };
 

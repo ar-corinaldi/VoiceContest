@@ -8,15 +8,38 @@ from dateutil.parser import parse
 from datetime import datetime
 from flask_jwt import JWT, jwt_required, current_identity
 from werkzeug.security import safe_str_cmp
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+from flask_cors import CORS
+
+
+def authenticate(username, password):
+    print(username)
+    print(password)
+    user = User.query.filter_by(username=username).first()
+    if user and user.password == password:
+        return user
+
+
+def identity(payload):
+    user_id = payload['identity']
+    return User.query.filter_by(id=user_id).first()
+
+
+app = Flask(__name__, static_folder='../client/public')
 app.config['SECRET_KEY'] = 'super-secret'
-
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+CORS(app)
 db = SQLAlchemy(app)
-
 ma = Marshmallow(app)
-
 api = Api(app)
+jwt = JWT(app, authenticate, identity)
+
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True)
+    password = db.Column(db.String(100))
+    contests = db.relationship('Contest', backref='owner')
 
 
 class Contest(db.Model):
@@ -32,13 +55,6 @@ class Contest(db.Model):
     recommendations = db.Column(db.String(500))
 
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True)
-    password = db.Column(db.String(100))
-    contests = db.relationship('Contest', backref='owner')
-
-
 class Contest_Shema(ma.Schema):
     class Meta:
         fields = ("id", "owner_id", "name", "bannerPath", "startDate",
@@ -47,7 +63,7 @@ class Contest_Shema(ma.Schema):
 
 class User_Shema(ma.Schema):
     class Meta:
-        fields = ("id", "username", "password")
+        fields = ("id", "username")
 
 
 post_contest_schema = Contest_Shema()
@@ -55,20 +71,6 @@ posts_contest_schema = Contest_Shema(many=True)
 
 post_user_schema = User_Shema()
 posts_user_schema = User_Shema(many=True)
-
-
-def authenticate(username, password):
-    user = User.query.filter_by(username=username).first()
-    if user and user.password == password:
-        return user
-
-
-def identity(payload):
-    user_id = payload['identity']
-    return User.query.filter_by(id=user_id).first()
-
-
-jwt = JWT(app, authenticate, identity)
 
 
 class ResourceListUsers(Resource):
@@ -80,7 +82,7 @@ class ResourceListUsers(Resource):
         signedUser = User.query.filter_by(
             username=request.json['username']).first()
         if signedUser:
-            return post_user_schema.dump(signedUser)
+            return jsonify({"error": "usuario ya existente"})
         newUser = User(
             username=request.json['username'],
             password=request.json['password']
@@ -112,6 +114,7 @@ class ResourceOneUser(Resource):
 
 
 class ResourseListContests(Resource):
+    @jwt_required()
     def get(self, userId):
         contests = Contest.query.filter(Contest.owner_id == userId)
         unorderedListContest = posts_contest_schema.dump(contests)
@@ -119,6 +122,7 @@ class ResourseListContests(Resource):
             unorderedListContest, key=lambda x: x['startDate'])
         return orderedListContest
 
+    @jwt_required()
     def post(self, userId):
         if 'name' not in request.json:
             return {"error": "Contest name missing"}, 412
@@ -147,27 +151,28 @@ class ResourseListContests(Resource):
             return {"error": "Contest script missing"}, 412
 
         if 'recommendations' not in request.json:
-            return {"error": "Contest recommendations missing"},412        
+            return {"error": "Contest recommendations missing"}, 412
 
         newContest = Contest(
-            name = request.json['name'],
-            owner_id = userId,
-            url = request.json['url'],
-            bannerPath = request.json['bannerPath'],
-            startDate = parse(request.json['startDate']).date(),
-            finishDate = parse(request.json['finishDate']).date(),
-            payment = request.json['payment'],
-            script = request.json['script'],
-            recommendations = request.json['recommendations']
-            )
+            name=request.json['name'],
+            owner_id=userId,
+            url=request.json['url'],
+            bannerPath=request.json['bannerPath'],
+            startDate=parse(request.json['startDate']).date(),
+            finishDate=parse(request.json['finishDate']).date(),
+            payment=request.json['payment'],
+            script=request.json['script'],
+            recommendations=request.json['recommendations']
+        )
         db.session.add(newContest)
         db.session.commit()
         return post_contest_schema.dump(newContest)
 
+
 api.add_resource(ResourceListUsers, '/users')
-api.add_resource(ResourceOneUser,'/users/<int:userId>')
-api.add_resource(ResourseListContests,'/users/<int:userId>/contests')
+api.add_resource(ResourceOneUser, '/users/<int:userId>')
+api.add_resource(ResourseListContests, '/users/<int:userId>/contests')
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
+    db.create_all()
+    app.run(debug=True, use_reloader=True)

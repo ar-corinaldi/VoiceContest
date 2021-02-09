@@ -12,13 +12,29 @@ import Login from "./pages/Login";
 import { useMemo, useState } from "react";
 import Contests from "./pages/Contests";
 import NotFound from "./pages/NotFound";
+import ContestDetail from "./pages/ContestDetail";
+import { useEffect } from "react";
 function App() {
   const [admin, setAdmin] = useState();
   const [token, setToken] = useState();
 
   // const userValue = useMemo(() => (
-  //   {user, setUser}
+  // {user, setUser}
   // ), [setUser, user]);
+
+  useEffect(() => {
+    const headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    // headers.append("Access-Control-Allow-Origin", "http://localhost:3001");
+    fetch("http://localhost:5000/auth", {
+      method: "POST",
+      body: JSON.stringify({ username: "allan", password: "roy" }),
+      headers,
+    }).then((res) => {
+      console.log(res);
+      res.json().then((data) => console.log(data));
+    });
+  });
 
   const signOut = async () => {
     // const res = await fetch("/signOut");
@@ -68,6 +84,19 @@ function App() {
                 />
               )
             }
+          />
+          <PrivateRoute
+            path="/:contestId/home"
+            exact
+            isSignedIn={!!admin}
+            component={() => (
+              <ContestDetail
+                admin={admin}
+                setAdmin={setAdmin}
+                token={token}
+                setToken={setToken}
+              />
+            )}
           />
           <Route path="*" component={NotFound} />
         </Switch>
