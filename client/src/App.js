@@ -21,21 +21,7 @@ function App() {
   // const userValue = useMemo(() => (
   // {user, setUser}
   // ), [setUser, user]);
-
-  useEffect(() => {
-    const headers = new Headers();
-    headers.append("Content-Type", "application/json");
-    // headers.append("Access-Control-Allow-Origin", "http://localhost:3001");
-    fetch("http://localhost:5000/auth", {
-      method: "POST",
-      body: JSON.stringify({ username: "allan", password: "roy" }),
-      headers,
-    }).then((res) => {
-      console.log(res);
-      res.json().then((data) => console.log(data));
-    });
-  });
-
+  
   const signOut = async () => {
     // const res = await fetch("/signOut");
     // const data = await res.json();

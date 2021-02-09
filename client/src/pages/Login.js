@@ -29,7 +29,7 @@ const Login = ({ admin, setAdmin, setToken, token }) => {
     try {
       const myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
-      const res = await fetch("/auth", {
+      const res = await fetch("http://localhost:5000/auth", {
         method: "POST",
         body: JSON.stringify(values),
         headers: myHeaders,
