@@ -65,7 +65,6 @@ class Voice(db.Model):
     voiceFilePath = db.Column(db.String(500))
     observationMessage = db.Column(db.String(500))
 
-
 class Contest_Shema(ma.Schema):
     class Meta:
         fields = ("id", "owner_id", "name", "bannerPath", "startDate",
@@ -87,6 +86,8 @@ posts_contest_schema = Contest_Shema(many=True)
 post_user_schema = User_Shema()
 posts_user_schema = User_Shema(many=True)
 
+post_voice_schema = Voice_Shema()
+posts_voice_schema = Voice_Shema(many=True)
 
 class ResourceListUsers(Resource):
     def get(self):
@@ -94,11 +95,10 @@ class ResourceListUsers(Resource):
         return posts_user_schema.dump(users)
 
     def post(self):
-        print("Registro de usuario")
         signedUser = User.query.filter_by(
             username=request.json['username']).first()
         if signedUser:
-            return jsonify({"error": "usuario ya existente"})
+            return jsonify({"error": "Username already taken, choose another one."})
         newUser = User(
             username=request.json['username'],
             password=request.json['password']
@@ -109,10 +109,12 @@ class ResourceListUsers(Resource):
 
 
 class ResourceOneUser(Resource):
+    @jwt_required()
     def get(self):
         user = User.query.get_or_404(current_identity.id)
         return post_user_schema.dump(user)
 
+    @jwt_required()
     def put(self):
         user = User.query.get_or_404(current_identity.id)
         if 'username' in request.json:
@@ -122,6 +124,7 @@ class ResourceOneUser(Resource):
         db.session.commit()
         return post_user_schema.dump(user)
 
+    @jwt_required()
     def delete(self):
         user = User.query.get_or_404(current_identity.id)
         db.session.delete(user)
@@ -186,16 +189,16 @@ class ResourseListContests(Resource):
 
 class ResourseOneContest(Resource):
     
-    def get(self,contestId):
-        contest = Contest.query.filter_by(owner_id = current_identity.id, id=contestId).first()
+    def get(self, id_contest):
+        contest = Contest.query.filter_by(id=id_contest).first()
         result = post_contest_schema.dump(contest)
         if len(result)==0:
             result = "Can not find the contest"
         return result
 
     @jwt_required()
-    def put(self,contestId):
-        contest = Contest.query.filter_by(owner_id = current_identity.id, id=contestId).first()
+    def put(self,id_contest):
+        contest = Contest.query.filter_by(owner_id = current_identity.id, id=id_contest).first()
         if 'name' in request.json:
             contest.name = request.json['name']
         if 'url' in request.json:
@@ -203,9 +206,9 @@ class ResourseOneContest(Resource):
         if 'bannerPath' in request.json:
             contest.bannerPath = request.json['bannerPath']
         if 'startDate' in request.json:
-            contest.startDate = datetime.datetime.strptime(request.json['startDate'], '%Y-%m-%d %H:%M:%S.%f').date()
+            contest.startDate = datetime.strptime(request.json['startDate'], '%Y-%m-%d %H:%M:%S.%f').date()
         if 'finishDate' in request.json:
-            contest.finishDate = datetime.datetime.strptime(request.json['finishDate'], '%Y-%m-%d %H:%M:%S.%f').date()
+            contest.finishDate = datetime.strptime(request.json['finishDate'], '%Y-%m-%d %H:%M:%S.%f').date()
         if 'payment' in request.json:
             contest.payment = request.json['payment']
         if 'script' in request.json:
@@ -213,18 +216,89 @@ class ResourseOneContest(Resource):
         if 'recommendations' in request.json:
             contest.recommendations = request.json['recommendations']
         db.session.commit()
-        return post_contest_schema.dump(evento)
+        return post_contest_schema.dump(contest)
 
-    def delete(self,id_evento):
-        contest = Contest.query.filter_by(owner_id = current_identity.id, id=id_evento).first()
+    @jwt_required()
+    def delete(self,id_contest):
+        contest = Contest.query.filter_by(owner_id = current_identity.id, id=id_contest).first()
         db.session.delete(contest)
         db.session.commit()
         return "Contest deleted"  
+
+class ResourseListVoices(Resource):
+    def get(self,id_contest):
+        voices = Voice.query.filter(Voice.relatedContest_id == id_contest)
+        "Ordenar por orden de insert en la tabla"
+        unorderedListVoices = posts_voice_schema.dump(voices)
+        """
+        orderedListContest = sorted(
+            unorderedListContest, key=lambda x: x['startDate'])
+            """
+        return unorderedListVoices
+
+    def post(self,id_contest):
+        if 'name' not in request.json:
+            return {"error": "Voice name missing"}, 412
+
+        if 'lastName' not in request.json:
+            return {"error": "Voice lastName missing"}, 412
+
+        if 'email' not in request.json:
+            return {"error": "Voice email missing"}, 412
+
+        if 'voiceFilePath' not in request.json:
+            return {"error": "Voice voiceFilePath missing"}, 412
+
+        if 'observationMessage' not in request.json:
+            return {"error": "Voice observationMessage missing"}, 412
+
+        newVoice = Voice(
+            relatedContest_id=id_contest,
+            name=request.json['name'],
+            lastName=request.json['lastName'],
+            email=request.json['email'],
+            voiceFilePath=request.json['voiceFilePath'],
+            observationMessage=request.json['observationMessage']
+        )
+        db.session.add(newVoice)
+        db.session.commit()
+        return post_voice_schema.dump(newVoice)
+
+class ResourseOneVoice(Resource):
+    def get(self,id_contest,id_voice):
+        voice = Voice.query.filter_by(relatedContest_id = id_contest, id=id_voice).first()
+        result = post_voice_schema.dump(voice)
+        if len(result)==0:
+            result = "Can not find the voice"
+        return result
+
+    def put(self,id_contest,id_voice):
+        voice = Voice.query.filter_by(relatedContest_id = id_contest, id=id_voice).first()
+        if 'name' in request.json:
+            voice.name = request.json['name']
+        if 'lastName' in request.json:
+            voice.lastName = request.json['lastName']
+        if 'email' in request.json:
+            voice.email = request.json['email']
+        if 'voiceFilePath' in request.json:
+            voice.voiceFilePath = request.json['voiceFilePath']
+        if 'observationMessage' in request.json:
+            voice.observationMessage = request.json['observationMessage'] 
+        db.session.commit()
+        return post_voice_schema.dump(voice)
+
+    def delete(self,id_contest, id_voice):
+        voice = Voice.query.filter_by(relatedContest_id = id_contest, id=id_voice).first()
+        db.session.delete(voice)
+        db.session.commit()
+        return "Voice deleted"  
 
 api.add_resource(ResourceListUsers, '/users')
 api.add_resource(ResourceOneUser, '/users')
 api.add_resource(ResourseListContests, '/contests')
 api.add_resource(ResourseOneContest, '/contests/<int:id_contest>')
+api.add_resource(ResourseListVoices, '/contests/<int:id_contest>/voices')
+api.add_resource(ResourseOneVoice, '/contests/<int:id_contest>/voices/<int:id_voice>')
 
 if __name__ == '__main__':
     db.create_all()
