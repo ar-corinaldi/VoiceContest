@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Row, Table, Col } from "antd";
 import { Link } from "react-router-dom";
 import { doFetch } from "../utils/useFetch";
 import { LoadingOutlined } from "@ant-design/icons";
-
+import { AuthContext } from "../App";
+import FormEvent from "../components/FormEvent";
 const initialColumns = [
   {
     title: "URL",
@@ -30,17 +31,16 @@ const initialColumns = [
   },
 ];
 
-const Contests = ({ admin, setAdmin, token, setToken }) => {
-  const [contests, setContests] = useState([
-    { url: "shit", name: "hello", start_date: "29-09-1999", payment: 5000 },
-  ]);
+const Contests = () => {
+  const [contests, setContests] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
+  const { token } = useContext(AuthContext);
   useEffect(() => {
     async function getContests() {
       const newContests = await doFetch("/contests", "GET", null, token);
-      console.log(newContests);
-      // setContests(newContests);
+      if (!newContests.error) {
+        setContests(newContests);
+      }
     }
     try {
       setIsLoading(true);
@@ -63,14 +63,18 @@ const Contests = ({ admin, setAdmin, token, setToken }) => {
   }
 
   return (
-    <React.Fragment>
-      <Row className="mt-4"></Row>
+    <>
+      <Row className="mt-4">
+        <Col>
+          <FormEvent setContests={setContests}></FormEvent>
+        </Col>
+      </Row>
       <Row>
         <Col span={24}>
           <Table dataSource={contests} columns={initialColumns} />
         </Col>
       </Row>
-    </React.Fragment>
+    </>
   );
 };
 

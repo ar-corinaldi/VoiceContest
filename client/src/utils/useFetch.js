@@ -28,7 +28,9 @@ export async function doFetch(url = "", method = "GET", body, token) {
         res = await fetch(FETCH_URL, { method });
       }
     }
-    console.log(res);
+    if (!res.ok) {
+      throw new Error("Request not fulfilled");
+    }
     const data = await res.json();
     return data;
   } catch (e) {

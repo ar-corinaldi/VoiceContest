@@ -1,17 +1,7 @@
-import React, { useState, useEffect } from "react";
-import {
-  Form,
-  Input,
-  Button,
-  Row,
-  Col,
-  Modal,
-  DatePicker,
-  InputNumber,
-} from "antd";
-import { admin } from "../App";
+import React, { useState, useContext } from "react";
+import { Form, Input, Button, Row, Col, Modal } from "antd";
+import { AuthContext } from "../App";
 import { doFetch } from "../utils/useFetch";
-
 const layout = {
   labelCol: { span: 8 },
   wrapperCol: { span: 16 },
@@ -20,22 +10,22 @@ const tailLayout = {
   wrapperCol: { offset: 8, span: 16 },
 };
 
-const Login = ({ admin, setAdmin, setToken, token }) => {
+const Login = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [formInfo, setFormInfo] = useState({});
-
+  const { admin, setAdmin, setToken, token } = useContext(AuthContext);
   const onFinish = async (values) => {
-    console.log(JSON.stringify(values));
     try {
-      const data = await doFetch("/auth", "POST", values, token);
-      console.log(data);
-      if (data.description === "Invalid credentials") {
+      const data = await doFetch("/auth", "POST", values);
+      if (data.description === "Invalid credentials" || data.error) {
         setFormInfo(values);
         return showModal();
       }
-      console.log(data);
-      setToken(data.access_token);
-      setAdmin(values);
+      if (data.access_token) {
+        setToken(data.access_token);
+        setAdmin(values);
+        return;
+      }
     } catch (e) {
       console.error("error", e);
     }
@@ -49,9 +39,8 @@ const Login = ({ admin, setAdmin, setToken, token }) => {
     setIsModalVisible(false);
     const data = await doFetch("/users", "POST", formInfo, token);
 
-    if (data && !data.error && setAdmin) {
-      setAdmin(data);
-      onFinish(data);
+    if (data && !data.error) {
+      onFinish(formInfo);
     }
   };
 
@@ -62,24 +51,6 @@ const Login = ({ admin, setAdmin, setToken, token }) => {
   const onFinishFailed = (errorInfo) => {
     console.error("Failed:", errorInfo);
   };
-
-  if (admin) {
-    return (
-      <Row className="mt-4">
-        <Col span={12} offset={6}>
-          <Button
-            type="primary"
-            htmlType="submit"
-            onClick={() => {
-              if (setAdmin) setAdmin(undefined);
-            }}
-          >
-            Cerrar Sesión
-          </Button>
-        </Col>
-      </Row>
-    );
-  }
 
   return (
     <Row className="mt-4">
