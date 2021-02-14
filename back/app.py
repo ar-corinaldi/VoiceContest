@@ -64,6 +64,8 @@ class Voice(db.Model):
     email = db.Column(db.String(100))
     voiceFilePath = db.Column(db.String(500))
     observationMessage = db.Column(db.String(500))
+    postDate= db.Column(db.Date)
+    state = db.Column(db.String(100))
 
 class Contest_Shema(ma.Schema):
     class Meta:
@@ -78,7 +80,7 @@ class User_Shema(ma.Schema):
 class Voice_Shema(ma.Schema):
     class Meta:
         fields = ("id", "relatedContest_id", "name", "lastName", "email",
-                  "voiceFilePath", "observationMessage")
+                  "voiceFilePath", "observationMessage","postDate", "state")
                   
 post_contest_schema = Contest_Shema()
 posts_contest_schema = Contest_Shema(many=True)
@@ -230,11 +232,9 @@ class ResourseListVoices(Resource):
         voices = Voice.query.filter(Voice.relatedContest_id == id_contest)
         "Ordenar por orden de insert en la tabla"
         unorderedListVoices = posts_voice_schema.dump(voices)
-        """
         orderedListContest = sorted(
-            unorderedListContest, key=lambda x: x['startDate'])
-            """
-        return unorderedListVoices
+            unorderedListVoices, key=lambda x: x['postDate'])
+        return orderedListContest
 
     def post(self,id_contest):
         if 'name' not in request.json:
@@ -258,7 +258,9 @@ class ResourseListVoices(Resource):
             lastName=request.json['lastName'],
             email=request.json['email'],
             voiceFilePath=request.json['voiceFilePath'],
-            observationMessage=request.json['observationMessage']
+            observationMessage=request.json['observationMessage'],
+            postDate = datetime.now(),
+            state="En proceso"
         )
         db.session.add(newVoice)
         db.session.commit()
