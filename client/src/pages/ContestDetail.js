@@ -1,11 +1,13 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Row, Col, Badge, Descriptions, Button } from "antd";
+import { Row, Col, Badge, Descriptions, Button, Input, Form } from "antd";
 import { Link, useParams, useHistory } from "react-router-dom";
 import { LoadingOutlined } from "@ant-design/icons";
 import { doFetch } from "../utils/useFetch";
 import { AuthContext } from "../App";
+
 const ContestDetail = () => {
   const [contest, setContest] = useState();
+  const [voices, setVoices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { contestUrl } = useParams();
   const { token } = useContext(AuthContext);
@@ -22,6 +24,7 @@ const ContestDetail = () => {
         );
         if (!newContest.error) {
           setContest(newContest);
+          console.log(newContest);
         }
       } catch (e) {
         console.error("error", e);
@@ -29,8 +32,33 @@ const ContestDetail = () => {
         setIsLoading(false);
       }
     }
+
     getContest(contestUrl);
   }, [contestUrl, setContest, token]);
+
+  useEffect(() => {
+    async function getVoices(idContest) {
+      try {
+        setIsLoading(true);
+        const newVoices = await doFetch(
+          `/contests/${idContest}/voices`,
+          "GET",
+          null,
+          null
+        );
+        if (!newVoices.error) {
+          console.log(newVoices);
+          setVoices(newVoices);
+        }
+      } catch (e) {
+        console.error("error", e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (contest && contest.id) getVoices(contest.id);
+  }, [contest, setIsLoading, setVoices]);
 
   const onEdit = () => {};
 
@@ -48,6 +76,22 @@ const ContestDetail = () => {
     } catch (e) {
       console.log("error", e);
     }
+  };
+
+  const postVoice = async (values) => {
+    console.log(values);
+    try {
+      const data = await doFetch(
+        `contests/${contest.id}/voices`,
+        "POST",
+        values,
+        null
+      );
+    } catch (e) {
+      console.error("error", e);
+    } finally {
+    }
+    setVoices((prevVoices) => [values, ...prevVoices]);
   };
 
   if (isLoading) {
@@ -84,7 +128,7 @@ const ContestDetail = () => {
     <React.Fragment>
       <Row className="mt-4">
         <Col span={24}>
-          <Link to="/">Ir a Concursos</Link>
+          {token && <Link to="/">Ir a Concursos</Link>}
           <Descriptions title="Información del Concurso" bordered>
             <Descriptions.Item label="Nombre">{contest.name}</Descriptions.Item>
             <Descriptions.Item label="Pago">
@@ -105,7 +149,7 @@ const ContestDetail = () => {
           </Descriptions>
         </Col>
       </Row>
-      <Row justify="center">
+      <Row justify="center" hidden={!token}>
         <Col className="p-3">
           <Button type="primary" onClick={onEdit}>
             Editar
@@ -117,8 +161,70 @@ const ContestDetail = () => {
           </Button>
         </Col>
       </Row>
+      <Row justify="space-around">
+        <Col>
+          {voices && voices.length === 0 && <div>No hay voces!</div>}
+          {voices &&
+            voices.map((voice) => <div key={voice.id}>{voice.name}</div>)}
+        </Col>
+        <Col>
+          <Form
+            name="nest-messages"
+            onFinish={(values) => postVoice(values)}
+            validateMessages={validateMessages}
+          >
+            <Form.Item name="name" label="Nombre" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name={"last_name"}
+              label="Apellido"
+              rules={[{ required: true }]}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name={"email"}
+              label="Correo electrónico"
+              rules={[{ required: true }]}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name={"voice_file_ath"}
+              label="Archivo de voz"
+              // rules={[{ required: true }]}
+            >
+              <Input type="file" />
+            </Form.Item>
+            <Form.Item
+              name={"observation_message"}
+              label="Obervaciones"
+              rules={[{ required: true }]}
+            >
+              <Input.TextArea />
+            </Form.Item>
+            <Form.Item wrapperCol={{ offset: 8 }}>
+              <Button type="primary" htmlType="submit">
+                Submit
+              </Button>
+            </Form.Item>
+          </Form>
+        </Col>
+      </Row>
     </React.Fragment>
   );
+};
+
+const validateMessages = {
+  required: "${label} is required!",
+  types: {
+    email: "${label} is not a valid email!",
+    number: "${label} is not a valid number!",
+  },
+  number: {
+    range: "${label} must be between ${min} and ${max}",
+  },
 };
 
 export default ContestDetail;

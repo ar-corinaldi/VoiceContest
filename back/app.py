@@ -64,9 +64,9 @@ class Voice(db.Model):
     name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     email = db.Column(db.String(100))
-    voiceFilePath = db.Column(db.String(500))
-    observationMessage = db.Column(db.String(500))
-    postDate = db.Column(db.Date)
+    voice_file_path = db.Column(db.String(500))
+    observation_message = db.Column(db.String(500))
+    post_date = db.Column(db.Date)
     state = db.Column(db.String(100))
 
 
@@ -83,8 +83,8 @@ class User_Shema(ma.Schema):
 
 class Voice_Shema(ma.Schema):
     class Meta:
-        fields = ("id", "relatedContest_id", "name", "lastName", "email",
-                  "voiceFilePath", "observationMessage", "postDate", "state")
+        fields = ("id", "related_contest_id", "name", "last_name", "email",
+                  "voice_file_path", "observation_message", "post_date", "state")
 
 
 post_contest_schema = Contest_Shema()
@@ -237,14 +237,17 @@ class ResourseOneContest(Resource):
 
 class ResourseListVoices(Resource):
     def get(self, id_contest):
+        print(id_contest)
         voices = Voice.query.filter(Voice.related_contest_id == id_contest)
         "Ordenar por orden de insert en la tabla"
         unorderedListVoices = posts_voice_schema.dump(voices)
         orderedListContest = sorted(
-            unorderedListVoices, key=lambda x: x['postDate'])
+            unorderedListVoices, key=lambda x: x['post_date'])
         return orderedListContest
 
     def post(self, id_contest):
+        print(request.json)
+        print(id_contest)
         if 'name' not in request.json:
             return {"error": "Voice name missing"}, 412
 
@@ -254,8 +257,8 @@ class ResourseListVoices(Resource):
         if 'email' not in request.json:
             return {"error": "Voice email missing"}, 412
 
-        if 'voiceFilePath' not in request.json:
-            return {"error": "Voice voiceFilePath missing"}, 412
+        if 'voice_file_path' not in request.json:
+            return {"error": "Voice voice_file_path missing"}, 412
 
         if 'observation_message' not in request.json:
             return {"error": "Voice observation_message missing"}, 412
@@ -265,9 +268,9 @@ class ResourseListVoices(Resource):
             name=request.json['name'],
             last_name=request.json['last_name'],
             email=request.json['email'],
-            voiceFilePath=request.json['voiceFilePath'],
-            observationMessage=request.json['observationMessage'],
-            postDate=datetime.now(),
+            voice_file_path=request.json['voice_file_path'],
+            observation_message=request.json['observation_message'],
+            post_date=datetime.now(),
             state="En proceso"
         )
         db.session.add(newVoice)
@@ -277,6 +280,7 @@ class ResourseListVoices(Resource):
 
 class ResourseOneVoice(Resource):
     def get(self, id_contest, id_voice):
+
         voice = Voice.query.filter_by(
             related_contest_id=id_contest, id=id_voice).first()
         result = post_voice_schema.dump(voice)
@@ -293,8 +297,8 @@ class ResourseOneVoice(Resource):
             voice.last_name = request.json['last_name']
         if 'email' in request.json:
             voice.email = request.json['email']
-        if 'voiceFilePath' in request.json:
-            voice.voiceFilePath = request.json['voiceFilePath']
+        if 'voice_file_path' in request.json:
+            voice.voice_file_path = request.json['voice_file_path']
         if 'observation_message' in request.json:
             voice.observation_message = request.json['observation_message']
         db.session.commit()
