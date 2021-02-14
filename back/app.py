@@ -106,7 +106,7 @@ class ResourceListUsers(Resource):
         signedUser = User.query.filter_by(
             username=request.json['username']).first()
         if signedUser:
-            return jsonify({"error": "Username already taken, choose another one."})
+            return jsonify({"error": "Username already taken, choose another one."}), 400
         newUser = User(
             username=request.json['username'],
             password=request.json['password']
@@ -198,7 +198,7 @@ class ResourseOneContest(Resource):
         contest = Contest.query.filter_by(url=url_contest).first()
         result = post_contest_schema.dump(contest)
         if len(result) == 0:
-            result = "Can not find the contest"
+            return {"error": "Can not find the contest"}, 404
         return result
 
     @jwt_required()
@@ -237,17 +237,14 @@ class ResourseOneContest(Resource):
 
 class ResourseListVoices(Resource):
     def get(self, id_contest):
-        print(id_contest)
         voices = Voice.query.filter(Voice.related_contest_id == id_contest)
-        "Ordenar por orden de insert en la tabla"
+        # "Ordenar por orden de insert en la tabla"
         unorderedListVoices = posts_voice_schema.dump(voices)
         orderedListContest = sorted(
             unorderedListVoices, key=lambda x: x['post_date'])
         return orderedListContest
 
     def post(self, id_contest):
-        print(request.json)
-        print(id_contest)
         if 'name' not in request.json:
             return {"error": "Voice name missing"}, 412
 

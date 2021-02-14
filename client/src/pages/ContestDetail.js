@@ -40,6 +40,7 @@ const ContestDetail = () => {
     async function getVoices(idContest) {
       try {
         setIsLoading(true);
+        console.log(idContest);
         const newVoices = await doFetch(
           `/contests/${idContest}/voices`,
           "GET",
@@ -81,17 +82,21 @@ const ContestDetail = () => {
   const postVoice = async (values) => {
     console.log(values);
     try {
+      console.log(`/contests/${contest.id}/voices`);
       const data = await doFetch(
-        `contests/${contest.id}/voices`,
+        `/contests/${contest.id}/voices`,
         "POST",
         values,
-        null
+        token
       );
+      if (!data.error) {
+        setVoices((prevVoices) => [data, ...prevVoices]);
+      }
+      console.log(data, "POSTTTT");
     } catch (e) {
       console.error("error", e);
     } finally {
     }
-    setVoices((prevVoices) => [values, ...prevVoices]);
   };
 
   if (isLoading) {
@@ -191,7 +196,7 @@ const ContestDetail = () => {
               <Input />
             </Form.Item>
             <Form.Item
-              name={"voice_file_ath"}
+              name={"voice_file_path"}
               label="Archivo de voz"
               // rules={[{ required: true }]}
             >
