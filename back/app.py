@@ -22,7 +22,7 @@ def identity(payload):
     return User.query.filter_by(id=user_id).first()
 
 
-app = Flask(__name__, static_folder='../client/public')
+app = Flask(__name__, static_folder='../client/build')
 app.config['SECRET_KEY'] = 'super-secret'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

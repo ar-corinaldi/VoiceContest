@@ -196,7 +196,7 @@ const ContestDetail = () => {
               <Input />
             </Form.Item>
             <Form.Item
-              name={"voice_file_path"}
+              name={"original_voice_file_path"}
               label="Archivo de voz"
               // rules={[{ required: true }]}
             >
