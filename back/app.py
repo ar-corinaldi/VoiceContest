@@ -64,7 +64,8 @@ class Voice(db.Model):
     name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     email = db.Column(db.String(100))
-    voice_file_path = db.Column(db.String(500))
+    original_voice_file_path = db.Column(db.String(500))
+    transformed_voice_file_path = db.Column(db.String(500))
     observation_message = db.Column(db.String(500))
     post_date = db.Column(db.Date)
     state = db.Column(db.String(100))
@@ -84,7 +85,7 @@ class User_Shema(ma.Schema):
 class Voice_Shema(ma.Schema):
     class Meta:
         fields = ("id", "related_contest_id", "name", "last_name", "email",
-                  "voice_file_path", "observation_message", "post_date", "state")
+                  "original_voice_file_path", "transformed_voice_file_path", "observation_message", "post_date", "state")
 
 
 post_contest_schema = Contest_Shema()
@@ -254,8 +255,8 @@ class ResourseListVoices(Resource):
         if 'email' not in request.json:
             return {"error": "Voice email missing"}, 412
 
-        if 'voice_file_path' not in request.json:
-            return {"error": "Voice voice_file_path missing"}, 412
+        if 'original_voice_file_path' not in request.json:
+            return {"error": "Voice original path is missing"}, 412
 
         if 'observation_message' not in request.json:
             return {"error": "Voice observation_message missing"}, 412
@@ -265,7 +266,7 @@ class ResourseListVoices(Resource):
             name=request.json['name'],
             last_name=request.json['last_name'],
             email=request.json['email'],
-            voice_file_path=request.json['voice_file_path'],
+            original_voice_file_path=request.json['observation_message'],
             observation_message=request.json['observation_message'],
             post_date=datetime.now(),
             state="En proceso"
@@ -294,8 +295,6 @@ class ResourseOneVoice(Resource):
             voice.last_name = request.json['last_name']
         if 'email' in request.json:
             voice.email = request.json['email']
-        if 'voice_file_path' in request.json:
-            voice.voice_file_path = request.json['voice_file_path']
         if 'observation_message' in request.json:
             voice.observation_message = request.json['observation_message']
         db.session.commit()
