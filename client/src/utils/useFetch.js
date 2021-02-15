@@ -1,7 +1,12 @@
 export async function doFetch(url = "", method = "GET", body, token) {
+  let URL = `http://localhost:5000${url}`;
+  console.log(process.env.NODE_ENV);
+  if (process.env.NODE_ENV === "production") {
+    URL = `http://172.24.98.84${url}`;
+  }
   try {
     const CREDENTIALS = `JWT ${token}`;
-    const FETCH_URL = `http://localhost:5000${url}`;
+    const FETCH_URL = URL;
     const headers = new Headers();
     headers.append("Content-Type", "application/json");
     let res;
