@@ -24,6 +24,7 @@ def identity(payload):
 
 app = Flask(__name__, static_folder='../client/build')
 app.config['SECRET_KEY'] = 'super-secret'
+# postgresql://allan:hola1234@172.24.98.83/voice_contest_db
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
