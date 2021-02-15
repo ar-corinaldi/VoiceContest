@@ -22,7 +22,7 @@ def identity(payload):
     return User.query.filter_by(id=user_id).first()
 
 
-app = Flask(__name__, static_folder='../client/public')
+app = Flask(__name__, static_folder='../client/build')
 app.config['SECRET_KEY'] = 'super-secret'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -85,7 +85,7 @@ class User_Shema(ma.Schema):
 class Voice_Shema(ma.Schema):
     class Meta:
         fields = ("id", "related_contest_id", "name", "last_name", "email",
-                  "original_voice_file_path","transformed_voice_file_path", "observation_message", "post_date", "state")
+                  "original_voice_file_path", "transformed_voice_file_path", "observation_message", "post_date", "state")
 
 
 post_contest_schema = Contest_Shema()
@@ -107,7 +107,7 @@ class ResourceListUsers(Resource):
         signedUser = User.query.filter_by(
             username=request.json['username']).first()
         if signedUser:
-            return jsonify({"error": "Username already taken, choose another one."})
+            return jsonify({"error": "Username already taken, choose another one."}), 400
         newUser = User(
             username=request.json['username'],
             password=request.json['password']
@@ -199,7 +199,7 @@ class ResourseOneContest(Resource):
         contest = Contest.query.filter_by(url=url_contest).first()
         result = post_contest_schema.dump(contest)
         if len(result) == 0:
-            result = "Can not find the contest"
+            return {"error": "Can not find the contest"}, 404
         return result
 
     @jwt_required()
@@ -239,10 +239,10 @@ class ResourseOneContest(Resource):
 class ResourseListVoices(Resource):
     def get(self, id_contest):
         voices = Voice.query.filter(Voice.related_contest_id == id_contest)
-        "Ordenar por orden de insert en la tabla"
+        # "Ordenar por orden de insert en la tabla"
         unorderedListVoices = posts_voice_schema.dump(voices)
         orderedListContest = sorted(
-            unorderedListVoices, key=lambda x: x['postDate'])
+            unorderedListVoices, key=lambda x: x['post_date'])
         return orderedListContest
 
     def post(self, id_contest):
@@ -278,6 +278,7 @@ class ResourseListVoices(Resource):
 
 class ResourseOneVoice(Resource):
     def get(self, id_contest, id_voice):
+
         voice = Voice.query.filter_by(
             related_contest_id=id_contest, id=id_voice).first()
         result = post_voice_schema.dump(voice)

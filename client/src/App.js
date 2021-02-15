@@ -65,10 +65,9 @@ function App() {
                 )
               }
             />
-            <PrivateRoute
+            <Route
               path="/:contestUrl/home"
               exact
-              isSignedIn={!!admin}
               component={() => <ContestDetail />}
             />
             <Route path="*" component={NotFound} />
