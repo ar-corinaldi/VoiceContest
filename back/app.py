@@ -27,6 +27,7 @@ def identity(payload):
 app = Flask(__name__, static_folder='../client/build')
 app.config['SECRET_KEY'] = 'super-secret'
 # sqlite:///test.db
+# postgresql://postgres@172.24.98.83:5432/voice_contest_db
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
@@ -114,7 +115,7 @@ class ResourceListUsers(Resource):
         signedUser = User.query.filter_by(
             username=request.json['username']).first()
         if signedUser:
-            return jsonify({"error": "Username already taken, choose another one."}), 400
+            return {"error": "Username already taken, choose another one."}, 400
         newUser = User(
             username=request.json['username'],
             password=request.json['password']
@@ -145,7 +146,7 @@ class ResourceOneUser(Resource):
         user = User.query.get_or_404(current_identity.id)
         db.session.delete(user)
         db.session.commit()
-        return '', 204
+        return "User deleted"
 
 
 class ResourseListContests(Resource):
@@ -245,7 +246,7 @@ class ResourseOneContest(Resource):
 
 class ResourseListVoices(Resource):
     def get(self, id_contest):
-        voices = Voice.query.filter(Voice.related_contest_id == id_contest)
+        voices = Voice.query.filter_by(related_contest_id = id_contest, state="Procesado")
         # "Ordenar por orden de insert en la tabla"
         unorderedListVoices = posts_voice_schema.dump(voices)
         orderedListContest = sorted(
