@@ -9,7 +9,8 @@ from datetime import datetime
 from flask_jwt import JWT, jwt_required, current_identity
 from werkzeug.security import safe_str_cmp
 from flask_cors import CORS
-
+from flask_script import Manager
+from flask_migrate import Migrate, MigrateCommand
 
 def authenticate(username, password):
     user = User.query.filter_by(username=username).first()
@@ -24,16 +25,17 @@ def identity(payload):
 
 app = Flask(__name__, static_folder='../client/build')
 app.config['SECRET_KEY'] = 'super-secret'
-# postgresql://allan:hola1234@172.24.98.83/voice_contest_db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 api = Api(app)
 jwt = JWT(app, authenticate, identity)
+migrate = Migrate(app, db)
+manager = Manager(app)
 
-
+manager.add_command('db', MigrateCommand);
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True)
@@ -319,4 +321,5 @@ api.add_resource(ResourseOneVoice,
 
 if __name__ == '__main__':
     db.create_all()
+    #manager.run()
     app.run(debug=True, use_reloader=True)
