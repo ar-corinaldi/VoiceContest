@@ -6,6 +6,7 @@ import { doFetch } from "../utils/useFetch";
 import { AuthContext } from "../App";
 
 const ContestDetail = () => {
+  const [file, setFile] = useState();
   const [contest, setContest] = useState();
   const [voices, setVoices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +41,6 @@ const ContestDetail = () => {
     async function getVoices(idContest) {
       try {
         setIsLoading(true);
-        console.log(idContest);
         const newVoices = await doFetch(
           `/contests/${idContest}/voices`,
           "GET",
@@ -48,7 +48,6 @@ const ContestDetail = () => {
           null
         );
         if (!newVoices.error) {
-          console.log(newVoices);
           setVoices(newVoices);
         }
       } catch (e) {
@@ -82,17 +81,20 @@ const ContestDetail = () => {
   const postVoice = async (values) => {
     console.log(values);
     try {
-      console.log(`/contests/${contest.id}/voices`);
-      const data = await doFetch(
-        `/contests/${contest.id}/voices`,
-        "POST",
-        values,
-        token
-      );
-      if (!data.error) {
-        setVoices((prevVoices) => [data, ...prevVoices]);
-      }
-      console.log(data, "POSTTTT");
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (ev) => {
+        console.log(ev.target.result);
+        values = { ...values, original_voice_file_path: ev.target.result };
+        doFetch(`/contests/${contest.id}/voices`, "POST", values, token).then(
+          (data) => {
+            if (!data.error) {
+              setVoices((prevVoices) => [data, ...prevVoices]);
+              // doFetch(`/${data.id}/upload_audio`, "POST", newForm, token);
+            }
+          }
+        );
+      };
     } catch (e) {
       console.error("error", e);
     } finally {
@@ -128,7 +130,10 @@ const ContestDetail = () => {
       </>
     );
   }
-
+  const changeFile = (ev) => {
+    console.log(ev.target.files);
+    setFile(ev.target.files[0]);
+  };
   return (
     <React.Fragment>
       <Row className="mt-4">
@@ -192,6 +197,7 @@ const ContestDetail = () => {
             name="nest-messages"
             onFinish={(values) => postVoice(values)}
             validateMessages={validateMessages}
+            encType="multipart/form-data"
           >
             <Form.Item name="name" label="Nombre" rules={[{ required: true }]}>
               <Input />
@@ -211,11 +217,11 @@ const ContestDetail = () => {
               <Input />
             </Form.Item>
             <Form.Item
-              name={"original_voice_file_path"}
+              name="original_voice_file_path"
               label="Archivo de voz"
               // rules={[{ required: true }]}
             >
-              <Input type="file" name="inputFile"/>
+              <Input type="file" onChange={changeFile} />
             </Form.Item>
             <Form.Item
               name={"observation_message"}
