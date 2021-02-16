@@ -175,7 +175,22 @@ const ContestDetail = () => {
         <Col>
           {voices && voices.length === 0 && <div>No hay voces!</div>}
           {voices &&
-            voices.map((voice) => <div key={voice.id}>{voice.name}</div>)}
+            voices.map((voice) => (
+              <div key={voice.id}>
+                <div class="card">
+                  <h5 class="card-header">Audio # {voice.id}</h5>
+                  <div class="card-body">
+                    <h5 class="card-title">
+                      {voice.name + " " + voice.last_name}
+                    </h5>
+                    <p class="card-text">{voice.email}</p>
+                    <a href="#" class="btn btn-primary">
+                      Go somewhere
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))}
         </Col>
         <Col>
           <Form
