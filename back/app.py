@@ -11,6 +11,7 @@ from werkzeug.security import safe_str_cmp
 from flask_cors import CORS
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
+from processor import process_audio
 
 def authenticate(username, password):
     user = User.query.filter_by(username=username).first()
@@ -310,6 +311,17 @@ class ResourseOneVoice(Resource):
         db.session.commit()
         return "Voice deleted"
 
+class ResourceAudioProcessor(Resource):
+    def get(self, id_contest, id_voice):
+
+        voices = Voice.query.filter_by(state=1)
+        unordered_list_voices = posts_voice_schema.dump(voices)
+        
+        process_audio.delay()  
+
+
+        return result
+
 
 api.add_resource(ResourceListUsers, '/users')
 api.add_resource(ResourceOneUser, '/users')
@@ -318,6 +330,7 @@ api.add_resource(ResourseOneContest, '/contests/<string:url_contest>')
 api.add_resource(ResourseListVoices, '/contests/<int:id_contest>/voices')
 api.add_resource(ResourseOneVoice,
                  '/contests/<int:id_contest>/voices/<int:id_voice>')
+api.add_resource(ResourceAudioProcessor, '/audio-processor')
 
 if __name__ == '__main__':
     db.create_all()
