@@ -1,5 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Row, Col, Badge, Descriptions, Button, Input, Form } from "antd";
+import {
+  Row,
+  Col,
+  Badge,
+  Descriptions,
+  Button,
+  Input,
+  Form,
+  Pagination,
+} from "antd";
 import { Link, useParams, useHistory } from "react-router-dom";
 import { LoadingOutlined } from "@ant-design/icons";
 import { doFetch } from "../utils/useFetch";
@@ -10,6 +19,8 @@ const ContestDetail = () => {
   const [contest, setContest] = useState();
   const [voices, setVoices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalVoices, setTotalVoices] = useState(0);
   const { contestUrl } = useParams();
   const { token } = useContext(AuthContext);
   const history = useHistory();
@@ -42,13 +53,20 @@ const ContestDetail = () => {
       try {
         setIsLoading(true);
         const newVoices = await doFetch(
-          `/contests/${idContest}/voices`,
+          `/contests/${idContest}/voices/${page}`,
           "GET",
           null,
           null
         );
+        const total = await doFetch(`/${idContest}/getLenVoices`, "GET");
+        console.log(("count", total));
+        console.log("newVoices", newVoices);
         if (!newVoices.error) {
           setVoices(newVoices);
+        }
+        if (!total.error) {
+          console.log(total.totalVoices);
+          setTotalVoices(total.totalVoices);
         }
       } catch (e) {
         console.error("error", e);
@@ -58,7 +76,7 @@ const ContestDetail = () => {
     }
 
     if (contest && contest.id) getVoices(contest.id);
-  }, [contest, setIsLoading, setVoices]);
+  }, [contest, setIsLoading, setVoices, page]);
 
   const onEdit = () => {};
 
@@ -79,18 +97,16 @@ const ContestDetail = () => {
   };
 
   const postVoice = async (values) => {
-    console.log(values);
     try {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = (ev) => {
-        console.log(ev.target.result);
         values = { ...values, original_voice_file_path: ev.target.result };
-        doFetch(`/contests/${contest.id}/voices`, "POST", values, token).then(
+        console.log(values);
+        doFetch(`/contests/${contest.id}/voices/0`, "POST", values, token).then(
           (data) => {
             if (!data.error) {
-              setVoices((prevVoices) => [data, ...prevVoices]);
-              // doFetch(`/${data.id}/upload_audio`, "POST", newForm, token);
+              setVoices((prevVoices) => [...prevVoices, data]);
             }
           }
         );
@@ -173,26 +189,6 @@ const ContestDetail = () => {
       </Row>
       <Row justify="space-around">
         <Col>
-          {voices && voices.length === 0 && <div>No hay voces!</div>}
-          {voices &&
-            voices.map((voice) => (
-              <div key={voice.id}>
-                <div class="card">
-                  <h5 class="card-header">Audio # {voice.id}</h5>
-                  <div class="card-body">
-                    <h5 class="card-title">
-                      {voice.name + " " + voice.last_name}
-                    </h5>
-                    <p class="card-text">{voice.email}</p>
-                    <a href="#" class="btn btn-primary">
-                      Go somewhere
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
-        </Col>
-        <Col>
           <Form
             name="nest-messages"
             onFinish={(values) => postVoice(values)}
@@ -236,6 +232,40 @@ const ContestDetail = () => {
               </Button>
             </Form.Item>
           </Form>
+        </Col>
+        <Col>
+          <Row justify="center">
+            {voices && voices.length === 0 && <div>No hay voces!</div>}
+            {voices &&
+              voices.map((voice, idx) => (
+                <Col key={voice.id} className="m-3">
+                  <div class="card">
+                    <h5 class="card-header">
+                      Audio # {idx + (page - 1) * 20 + 1}
+                    </h5>
+                    <div class="card-body">
+                      <h5 class="card-title">
+                        {voice.name + " " + voice.last_name}
+                      </h5>
+                      <p class="card-text">{voice.email}</p>
+                      <a href="#" class="btn btn-primary">
+                        Go somewhere
+                      </a>
+                    </div>
+                  </div>
+                </Col>
+              ))}
+          </Row>
+          <Row justify="center">
+            <Col>
+              <Pagination
+                defaultCurrent={page}
+                pageSize={20}
+                total={totalVoices}
+                onChange={(page) => setPage(page)}
+              />
+            </Col>
+          </Row>
         </Col>
       </Row>
     </React.Fragment>

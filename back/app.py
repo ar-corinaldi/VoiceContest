@@ -106,6 +106,12 @@ post_voice_schema = Voice_Shema()
 posts_voice_schema = Voice_Shema(many=True)
 
 
+@app.route("/<int:id_contest>/getLenVoices")
+def getLenVoices(id_contest):
+    count = Voice.query.filter_by(related_contest_id=id_contest).all()
+    return {"totalVoices": len(count)}
+
+
 class ResourceListUsers(Resource):
     def get(self):
         users = User.query.all()
@@ -245,15 +251,18 @@ class ResourseOneContest(Resource):
 
 
 class ResourseListVoices(Resource):
-    def get(self, id_contest):
-        voices = Voice.query.filter_by(related_contest_id = id_contest, state="Procesado")
+    def get(self, id_contest, page=1):
+        print(Voice.query.count)
+        per_page = 20
+        voices = Voice.query.filter_by(related_contest_id=id_contest).order_by(
+            Voice.post_date.asc()).paginate(page, per_page, error_out=False)
         # "Ordenar por orden de insert en la tabla"
-        unorderedListVoices = posts_voice_schema.dump(voices)
-        orderedListContest = sorted(
-            unorderedListVoices, key=lambda x: x['post_date'])
-        return orderedListContest
+        orderedListVoices = posts_voice_schema.dump(voices.items)
+        # orderedListContest = sorted(
+        #     unorderedListVoices, key=lambda x: x['post_date'])
+        return orderedListVoices
 
-    def post(self, id_contest):
+    def post(self, id_contest, page=0):
         if 'name' not in request.json:
             return {"error": "Voice name missing"}, 412
 
@@ -320,7 +329,8 @@ api.add_resource(ResourceListUsers, '/users')
 api.add_resource(ResourceOneUser, '/users')
 api.add_resource(ResourseListContests, '/contests')
 api.add_resource(ResourseOneContest, '/contests/<string:url_contest>')
-api.add_resource(ResourseListVoices, '/contests/<int:id_contest>/voices')
+api.add_resource(ResourseListVoices,
+                 '/contests/<int:id_contest>/voices/<int:page>')
 api.add_resource(ResourseOneVoice,
                  '/contests/<int:id_contest>/voices/<int:id_voice>')
 
