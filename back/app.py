@@ -11,6 +11,8 @@ from werkzeug.security import safe_str_cmp
 from flask_cors import CORS
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
+import base64
+import re
 
 
 def authenticate(username, password):
@@ -28,7 +30,7 @@ app = Flask(__name__, static_folder='../client/build')
 app.config['SECRET_KEY'] = 'super-secret'
 # sqlite:///test.db
 # postgresql://postgres@172.24.98.83:5432/voice_contest_db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db = SQLAlchemy(app)
@@ -245,6 +247,7 @@ class ResourseOneContest(Resource):
 
 
 class ResourseListVoices(Resource):
+    
     def get(self, id_contest):
         voices = Voice.query.filter_by(related_contest_id = id_contest, state="Procesado")
         # "Ordenar por orden de insert en la tabla"
@@ -252,8 +255,14 @@ class ResourseListVoices(Resource):
         orderedListContest = sorted(
             unorderedListVoices, key=lambda x: x['post_date'])
         return orderedListContest
-
+    
     def post(self, id_contest):
+        print(request)
+        uploaded_file = request.json['file_upload']
+        print("FILEEE")
+        print(uploaded_file)
+        if uploaded_file.name != '':
+            uploaded_file.save(uploaded_file.filename)
         if 'name' not in request.json:
             return {"error": "Voice name missing"}, 412
 
@@ -314,7 +323,6 @@ class ResourseOneVoice(Resource):
         db.session.delete(voice)
         db.session.commit()
         return "Voice deleted"
-
 
 api.add_resource(ResourceListUsers, '/users')
 api.add_resource(ResourceOneUser, '/users')
