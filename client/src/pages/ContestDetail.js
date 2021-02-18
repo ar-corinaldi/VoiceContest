@@ -15,7 +15,13 @@ import { doFetch } from "../utils/useFetch";
 import { AuthContext } from "../App";
 
 const ContestDetail = () => {
+  const [refresh, setRefresh]= useState(false);
+  const [name, setName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
   const [file, setFile] = useState();
+  const [observaciones, setObservaciones] = useState("");
   const [contest, setContest] = useState();
   const [voices, setVoices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,7 +82,7 @@ const ContestDetail = () => {
     }
 
     if (contest && contest.id) getVoices(contest.id);
-  }, [contest, setIsLoading, setVoices, page]);
+  }, [contest, setIsLoading, setVoices, page, refresh]);
 
   const onEdit = () => {};
 
@@ -96,26 +102,38 @@ const ContestDetail = () => {
     }
   };
 
-  const postVoice = async (values) => {
+  async function postVoice() {
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (ev) => {
-        values = { ...values, original_voice_file_path: ev.target.result };
-        console.log(values);
-        doFetch(`/contests/${contest.id}/voices/0`, "POST", values, token).then(
-          (data) => {
-            if (!data.error) {
-              setVoices((prevVoices) => [...prevVoices, data]);
-            }
-          }
-        );
+      let voice = {
+        name: name,
+        last_name: lastName,
+        email: email,
+        observation_message: observaciones,
       };
+      doFetch(
+        `/contests/${contest.id}/voices/${page}`,
+        "POST",
+        voice,
+        token
+      ).then((data) => {
+        if (!data.error) {
+          setVoices((prevVoices) => [...prevVoices, data]);
+        }
+        const formData = new FormData();
+        formData.append("audio_file", file);
+        const headers = new Headers();
+        headers.append("Content-Type", "multipart/form-data");
+        fetch(`http://localhost:5000/contests/${contest.id}/voices/${data}`, {
+          method: "PUT",
+          body: formData,
+        });
+        setRefresh(true);
+      });
     } catch (e) {
       console.error("error", e);
     } finally {
     }
-  };
+  }
 
   if (isLoading) {
     return (
@@ -191,16 +209,21 @@ const ContestDetail = () => {
         <Col>
           <Form
             name="nest-messages"
-            onFinish={(values) => postVoice(values)}
             validateMessages={validateMessages}
             encType="multipart/form-data"
           >
-            <Form.Item name="name" label="Nombre" rules={[{ required: true }]}>
+            <Form.Item
+              name="name"
+              label="Nombre"
+              onChange={(e) => setName(e.target.value)}
+              rules={[{ required: true }]}
+            >
               <Input />
             </Form.Item>
             <Form.Item
               name={"last_name"}
               label="Apellido"
+              onChange={(e) => setLastName(e.target.value)}
               rules={[{ required: true }]}
             >
               <Input />
@@ -208,6 +231,7 @@ const ContestDetail = () => {
             <Form.Item
               name={"email"}
               label="Correo electrónico"
+              onChange={(e) => setEmail(e.target.value)}
               rules={[{ required: true }]}
             >
               <Input />
@@ -215,19 +239,25 @@ const ContestDetail = () => {
             <Form.Item
               name="original_voice_file_path"
               label="Archivo de voz"
-              // rules={[{ required: true }]}
+              onChange={(e) => setFile(e.target.files[0])}
+              rules={[{ required: true }]}
             >
-              <Input type="file" onChange={changeFile} />
+              <Input type="file" />
             </Form.Item>
             <Form.Item
               name={"observation_message"}
               label="Obervaciones"
+              onChange={(e) => setObservaciones(e.target.value)}
               rules={[{ required: true }]}
             >
               <Input.TextArea />
             </Form.Item>
             <Form.Item wrapperCol={{ offset: 8 }}>
-              <Button type="primary" htmlType="submit">
+              <Button
+                type="primary"
+                htmlType="submit"
+                onClick={() => postVoice()}
+              >
                 Submit
               </Button>
             </Form.Item>
@@ -239,16 +269,16 @@ const ContestDetail = () => {
             {voices &&
               voices.map((voice, idx) => (
                 <Col key={voice.id} className="m-3">
-                  <div class="card">
-                    <h5 class="card-header">
+                  <div className="card">
+                    <h5 className="card-header">
                       Audio # {idx + (page - 1) * 20 + 1}
                     </h5>
-                    <div class="card-body">
-                      <h5 class="card-title">
+                    <div className="card-body">
+                      <h5 className="card-title">
                         {voice.name + " " + voice.last_name}
                       </h5>
-                      <p class="card-text">{voice.email}</p>
-                      <a href="#" class="btn btn-primary">
+                      <p className="card-text">{voice.email}</p>
+                      <a href="#" className="btn btn-primary">
                         Go somewhere
                       </a>
                     </div>
