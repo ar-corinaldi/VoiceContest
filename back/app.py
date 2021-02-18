@@ -377,8 +377,8 @@ class ResourceVoiceUpdater(Resource):
                     sender ='voice.contest.cloud@gmail.com', 
                     recipients = ['da.babativa@uniandes.edu.co', 'da.babativa@outlook.com', 'babat00@outlook.com'] 
                 ) 
-                msg.body = 'Hello Flask message sent from Flask-Mail'
-                mail.send(msg) 
+        msg.body = 'Hello Flask message sent from Flask-Mail'
+        mail.send(msg) 
         return result
 
 
