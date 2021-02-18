@@ -366,7 +366,9 @@ class ResourseOneVoice(Resource):
 class ResourceVoiceUpdater(Resource):
     def get(self):
         voices = Voice.query.filter_by(state="En proceso")
-        result = posts_voice_schema.dump(voices.items)
+        print(voices)
+        result = posts_voice_schema.dump(voices)
+        print(result)
         processed_files = [f for f in listdir('/home/estudiante/VoiceContest/back/processed/') if isfile(join('/home/estudiante/VoiceContest/back/processed/', f))]
         for voice in result:
             processed_filename = voice.transformed_voice_file_path
@@ -392,8 +394,7 @@ api.add_resource(ResourseListVoices,
                  '/contests/<int:id_contest>/voices/<int:page>')
 api.add_resource(ResourseOneVoice,
                  '/contests/<int:id_contest>/voices/<int:id_voice>')
-api.add_resource(ResourceVoiceUpdater,
-                 '/update-processed')
+api.add_resource(ResourceVoiceUpdater,'/update-processed')
 
 if __name__ == '__main__':
     db.create_all()
