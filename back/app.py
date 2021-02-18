@@ -11,7 +11,11 @@ from werkzeug.security import safe_str_cmp
 from flask_cors import CORS
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
-
+import base64
+import re
+import os      # For File Manipulations like get paths, rename
+from flask import Flask, flash, request, redirect, render_template
+from werkzeug.utils import secure_filename
 
 def authenticate(username, password):
     user = User.query.filter_by(username=username).first()
@@ -39,7 +43,26 @@ migrate = Migrate(app, db)
 manager = Manager(app)
 
 manager.add_command('db', MigrateCommand)
+#It will allow below 16MB contents only, you can change it
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
+path = os.getcwd()
+# file Upload
 
+ORIGINALS_FOLDER = os.path.join(path, 'originals')
+UNPROCESSED_FOLDER = os.path.join(path, 'unprocessed')
+PROCESSED_FOLDER = os.path.join(path, 'processed')
+
+if not os.path.isdir(ORIGINALS_FOLDER):
+    os.mkdir(ORIGINALS_FOLDER)
+
+app.config['ORIGINALS_FOLDER'] = ORIGINALS_FOLDER
+app.config['UNPROCESSED_FOLDER'] = UNPROCESSED_FOLDER
+app.config['PROCESSED_FOLDER'] = PROCESSED_FOLDER
+
+ALLOWED_EXTENSIONS = set(['wav', 'mp3', 'ogg','mpeg'])
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -252,7 +275,6 @@ class ResourseOneContest(Resource):
 
 class ResourseListVoices(Resource):
     def get(self, id_contest, page=1):
-        print(Voice.query.count)
         per_page = 20
         voices = Voice.query.filter_by(related_contest_id=id_contest).order_by(
             Voice.post_date.asc()).paginate(page, per_page, error_out=False)
@@ -262,7 +284,8 @@ class ResourseListVoices(Resource):
         #     unorderedListVoices, key=lambda x: x['post_date'])
         return orderedListVoices
 
-    def post(self, id_contest, page=0):
+    def post(self, id_contest, page):
+
         if 'name' not in request.json:
             return {"error": "Voice name missing"}, 412
 
@@ -272,30 +295,25 @@ class ResourseListVoices(Resource):
         if 'email' not in request.json:
             return {"error": "Voice email missing"}, 412
 
-        if 'original_voice_file_path' not in request.json:
-            return {"error": "Voice original path is missing"}, 412
-
         if 'observation_message' not in request.json:
             return {"error": "Voice observation_message missing"}, 412
-
+        """Falta original_file_path"""
         newVoice = Voice(
             related_contest_id=id_contest,
             name=request.json['name'],
             last_name=request.json['last_name'],
             email=request.json['email'],
-            original_voice_file_path=request.json['observation_message'],
             observation_message=request.json['observation_message'],
             post_date=datetime.now(),
             state="En proceso"
         )
         db.session.add(newVoice)
         db.session.commit()
-        return post_voice_schema.dump(newVoice)
+        return newVoice.id
 
 
 class ResourseOneVoice(Resource):
     def get(self, id_contest, id_voice):
-
         voice = Voice.query.filter_by(
             related_contest_id=id_contest, id=id_voice).first()
         result = post_voice_schema.dump(voice)
@@ -304,16 +322,21 @@ class ResourseOneVoice(Resource):
         return result
 
     def put(self, id_contest, id_voice):
-        voice = Voice.query.filter_by(
-            related_contest_id=id_contest, id=id_voice).first()
-        if 'name' in request.json:
-            voice.name = request.json['name']
-        if 'last_name' in request.json:
-            voice.last_name = request.json['last_name']
-        if 'email' in request.json:
-            voice.email = request.json['email']
-        if 'observation_message' in request.json:
-            voice.observation_message = request.json['observation_message']
+        voice = Voice.query.filter_by(related_contest_id=id_contest, id=id_voice).first()
+        file = request.files.get('audio_file')
+        if file.filename == '':
+            flash('No file selected for uploading')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            original_file_path = os.path.join(app.config['ORIGINALS_FOLDER'], filename)
+            unprocessed_file_path = os.path.join(app.config['UNPROCESSED_FOLDER'], filename)
+            file.save(original_file_path)
+            file.save(unprocessed_file_path)
+            voice.original_voice_file_path=os.path.join(app.config['UNPROCESSED_FOLDER'], filename)
+            flash('File successfully uploaded')
+        else:
+            return {"error": "File format is not acceptable"}, 412
+
         db.session.commit()
         return post_voice_schema.dump(voice)
 
@@ -323,7 +346,6 @@ class ResourseOneVoice(Resource):
         db.session.delete(voice)
         db.session.commit()
         return "Voice deleted"
-
 
 api.add_resource(ResourceListUsers, '/users')
 api.add_resource(ResourceOneUser, '/users')
