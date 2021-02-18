@@ -367,10 +367,10 @@ class ResourceVoiceUpdater(Resource):
     def get(self):
         voices = Voice.query.filter_by(state="En proceso")
         print(voices)
-        result = posts_voice_schema.dump(voices)
+        orderedListVoices = posts_voice_schema.dump(voices.items)
         print(result)
         processed_files = [f for f in listdir('/home/estudiante/VoiceContest/back/processed/') if isfile(join('/home/estudiante/VoiceContest/back/processed/', f))]
-        for voice in result:
+        for voice in orderedListVoices:
             processed_filename = voice.transformed_voice_file_path
             if processed_filename in processed_files:
                 voice.state = "Procesada"
