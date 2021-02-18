@@ -300,7 +300,7 @@ const ContestDetail = () => {
                         }}
                         className="btn btn-primary"
                       >
-                        Go somewhere
+                        Descargar
                       </button>
                       <audio autoPlay controls>
                         <source id="source" />
