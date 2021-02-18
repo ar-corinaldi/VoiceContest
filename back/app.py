@@ -30,6 +30,16 @@ def identity(payload):
 
 
 app = Flask(__name__, static_folder=os.path.dirname(__file__))
+mail = Mail(app)  # instantiate the mail class
+
+# configuration of mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USERNAME'] = 'voice.contest.cloud@gmail.com'
+app.config['MAIL_PASSWORD'] = 'Cl0ud123'
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+mail = Mail(app)
 app.config['SECRET_KEY'] = 'super-secret'
 # sqlite:///test.db
 # postgresql://postgres@172.24.98.83:5432/voice_contest_db
@@ -353,6 +363,9 @@ class ResourseOneVoice(Resource):
             file.save(unprocessed_file_path)
             voice.original_voice_file_path = os.path.join(
                 app.config['UNPROCESSED_FOLDER'], filename)
+            converted_filename = filename.split(".")[0] + ".mp3"
+            voice.transformed_voice_file_path = os.path.join(
+                app.config['PROCESSED_FOLDER'], converted_filename)
             flash('File successfully uploaded')
         else:
             return {"error": "File format is not acceptable"}, 412
@@ -368,6 +381,29 @@ class ResourseOneVoice(Resource):
         return "Voice deleted"
 
 
+class ResourceVoiceUpdater(Resource):
+    def get(self):
+        voices = Voice.query.filter_by(state="En proceso")
+        result = posts_voice_schema.dump(voices.items)
+        processed_files = [f for f in listdir('/home/estudiante/VoiceContest/back/processed/') if isfile(
+            join('/home/estudiante/VoiceContest/back/processed/', f))]
+        for voice in result:
+            processed_filename = voice.transformed_voice_file_path
+            if processed_filename in processed_files:
+                voice.state = "Procesada"
+
+        db.session.commit()
+        msg = Message(
+            'Hello',
+            sender='voice.contest.cloud@gmail.com',
+            recipients=['da.babativa@uniandes.edu.co',
+                        'da.babativa@outlook.com', 'babat00@outlook.com']
+        )
+        msg.body = 'Hello Flask message sent from Flask-Mail'
+        mail.send(msg)
+        return result
+
+
 api.add_resource(ResourceListUsers, '/users')
 api.add_resource(ResourceOneUser, '/users')
 api.add_resource(ResourseListContests, '/contests')
@@ -376,6 +412,8 @@ api.add_resource(ResourseListVoices,
                  '/contests/<int:id_contest>/voices/<int:page>')
 api.add_resource(ResourseOneVoice,
                  '/contests/<int:id_contest>/voices/<int:id_voice>')
+api.add_resource(ResourceVoiceUpdater,
+                 '/update-processed')
 
 if __name__ == '__main__':
     db.create_all()
