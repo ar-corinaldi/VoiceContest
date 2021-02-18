@@ -59,7 +59,7 @@ app.config['ORIGINALS_FOLDER'] = ORIGINALS_FOLDER
 app.config['UNPROCESSED_FOLDER'] = UNPROCESSED_FOLDER
 app.config['PROCESSED_FOLDER'] = PROCESSED_FOLDER
 
-ALLOWED_EXTENSIONS = set(['wav', 'mp3', 'ogg','mpeg'])
+ALLOWED_EXTENSIONS = set(['wav', 'mp3', 'ogg'])
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
