@@ -17,6 +17,8 @@ import os      # For File Manipulations like get paths, rename
 from flask import Flask, flash, request, redirect, render_template
 from werkzeug.utils import secure_filename
 from flask_mail import Mail, Message 
+from os import listdir
+from os.path import isfile, join
 
 def authenticate(username, password):
     user = User.query.filter_by(username=username).first()
