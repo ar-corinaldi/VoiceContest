@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
 from flask import jsonify
 from flask_restful import Api, Resource
 from flask_sqlalchemy import SQLAlchemy
@@ -17,6 +17,7 @@ import os      # For File Manipulations like get paths, rename
 from flask import Flask, flash, request, redirect, render_template
 from werkzeug.utils import secure_filename
 
+
 def authenticate(username, password):
     user = User.query.filter_by(username=username).first()
     if user and user.password == password:
@@ -28,11 +29,11 @@ def identity(payload):
     return User.query.filter_by(id=user_id).first()
 
 
-app = Flask(__name__, static_folder='../client/build')
+app = Flask(__name__, static_folder=os.path.dirname(__file__))
 app.config['SECRET_KEY'] = 'super-secret'
 # sqlite:///test.db
 # postgresql://postgres@172.24.98.83:5432/voice_contest_db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db = SQLAlchemy(app)
@@ -43,8 +44,8 @@ migrate = Migrate(app, db)
 manager = Manager(app)
 
 manager.add_command('db', MigrateCommand)
-#It will allow below 16MB contents only, you can change it
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
+# It will allow below 16MB contents only, you can change it
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 path = os.getcwd()
 # file Upload
 
@@ -61,8 +62,10 @@ app.config['PROCESSED_FOLDER'] = PROCESSED_FOLDER
 
 ALLOWED_EXTENSIONS = set(['wav', 'mp3', 'ogg'])
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -127,6 +130,19 @@ posts_user_schema = User_Shema(many=True)
 
 post_voice_schema = Voice_Shema()
 posts_voice_schema = Voice_Shema(many=True)
+
+
+@app.route("/<int:id_contest>/<int:id_voice>/getVoice")
+def getVoice(id_contest, id_voice):
+    # print(os.path.dirname(__file__))
+    # print(os.path.join("originals"))
+    # print(os.path.join("originals/all-my-life.mp3"))
+    # send_file(
+    #      path_to_file,
+    #      mimetype="audio/wav",
+    #      as_attachment=True,
+    #      attachment_filename="test.wav")
+    return send_file(os.path.abspath("originals/all_my_life.mp3"), mimetype="audio/mpeg3", as_attachment=True, attachment_filename="all_my_life.mp3")
 
 
 @app.route("/<int:id_contest>/getLenVoices")
@@ -322,17 +338,21 @@ class ResourseOneVoice(Resource):
         return result
 
     def put(self, id_contest, id_voice):
-        voice = Voice.query.filter_by(related_contest_id=id_contest, id=id_voice).first()
+        voice = Voice.query.filter_by(
+            related_contest_id=id_contest, id=id_voice).first()
         file = request.files.get('audio_file')
         if file.filename == '':
             flash('No file selected for uploading')
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            original_file_path = os.path.join(app.config['ORIGINALS_FOLDER'], filename)
-            unprocessed_file_path = os.path.join(app.config['UNPROCESSED_FOLDER'], filename)
+            original_file_path = os.path.join(
+                app.config['ORIGINALS_FOLDER'], filename)
+            unprocessed_file_path = os.path.join(
+                app.config['UNPROCESSED_FOLDER'], filename)
             file.save(original_file_path)
             file.save(unprocessed_file_path)
-            voice.original_voice_file_path=os.path.join(app.config['UNPROCESSED_FOLDER'], filename)
+            voice.original_voice_file_path = os.path.join(
+                app.config['UNPROCESSED_FOLDER'], filename)
             flash('File successfully uploaded')
         else:
             return {"error": "File format is not acceptable"}, 412
@@ -346,6 +366,7 @@ class ResourseOneVoice(Resource):
         db.session.delete(voice)
         db.session.commit()
         return "Voice deleted"
+
 
 api.add_resource(ResourceListUsers, '/users')
 api.add_resource(ResourceOneUser, '/users')

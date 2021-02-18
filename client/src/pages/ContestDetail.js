@@ -15,7 +15,7 @@ import { doFetch } from "../utils/useFetch";
 import { AuthContext } from "../App";
 
 const ContestDetail = () => {
-  const [refresh, setRefresh]= useState(false);
+  const [refresh, setRefresh] = useState(false);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -278,9 +278,33 @@ const ContestDetail = () => {
                         {voice.name + " " + voice.last_name}
                       </h5>
                       <p className="card-text">{voice.email}</p>
-                      <a href="#" className="btn btn-primary">
+                      <button
+                        onClick={async () => {
+                          const res = await fetch(
+                            `/${contest.id}/${voice.id}/getVoice`
+                          );
+                          console.log(res.headers);
+                          console.log("res", res);
+                          const blob = await res.blob();
+                          let url = window.URL.createObjectURL(blob);
+                          console.log(blob);
+                          console.log(url);
+
+                          let aTag = document.createElement("a");
+                          aTag.href =
+                            process.env.NODE_ENV === "production"
+                              ? `http://172.24.98.143/${contest.id}/${voice.id}/getVoice`
+                              : `http://localhost:5000/${contest.id}/${voice.id}/getVoice`;
+                          aTag.target = "_blank";
+                          aTag.click();
+                        }}
+                        className="btn btn-primary"
+                      >
                         Go somewhere
-                      </a>
+                      </button>
+                      <audio autoPlay controls>
+                        <source id="source" />
+                      </audio>
                     </div>
                   </div>
                 </Col>
