@@ -34,10 +34,11 @@ def identity(payload):
 
 
 app = Flask(__name__, static_folder=os.path.dirname(__file__))
-mail = Mail(app)  # instantiate the mail class
 
-# configuration of mail
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+mail = Mail(app) # instantiate the mail class 
+   
+# configuration of mail 
+app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USERNAME'] = 'voice.contest.cloud@gmail.com'
 app.config['MAIL_PASSWORD'] = 'Cl0ud123'
@@ -49,10 +50,11 @@ app.config['SECRET_KEY'] = 'super-secret'
 # postgresql://postgres@172.24.98.83:5432/voice_contest_db
 
 # PROD
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
 
 # DEV
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db = SQLAlchemy(app)
