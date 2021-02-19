@@ -13,13 +13,13 @@ import { Link, useParams, useHistory } from "react-router-dom";
 import { LoadingOutlined } from "@ant-design/icons";
 import { doFetch } from "../utils/useFetch";
 import { AuthContext } from "../App";
+import VoiceDetail from "../components/VoiceDetail";
 
 const ContestDetail = () => {
   const [refresh, setRefresh] = useState(false);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
   const [file, setFile] = useState();
   const [observaciones, setObservaciones] = useState("");
   const [contest, setContest] = useState();
@@ -30,6 +30,9 @@ const ContestDetail = () => {
   const { contestUrl } = useParams();
   const { token } = useContext(AuthContext);
   const history = useHistory();
+
+  console.log(page, totalVoices);
+
   useEffect(() => {
     async function getContest(url) {
       try {
@@ -267,54 +270,24 @@ const ContestDetail = () => {
           <Row justify="center">
             {voices && voices.length === 0 && <div>No hay voces!</div>}
             {voices &&
-              voices.map((voice, idx) => (
-                <Col key={voice.id} className="m-3">
-                  <div className="card">
-                    <h5 className="card-header">
-                      Audio # {idx + (page - 1) * 20 + 1}
-                    </h5>
-                    <div className="card-body">
-                      <h5 className="card-title">
-                        {voice.name + " " + voice.last_name}
-                      </h5>
-                      <p className="card-text">{voice.email}</p>
-                      <button
-                        onClick={async () => {
-                          const res = await fetch(
-                            `/${contest.id}/${voice.id}/getVoice`
-                          );
-                          console.log(res.headers);
-                          console.log("res", res);
-                          const blob = await res.blob();
-                          let url = window.URL.createObjectURL(blob);
-                          console.log(blob);
-                          console.log(url);
-
-                          let aTag = document.createElement("a");
-                          aTag.href =
-                            process.env.NODE_ENV === "production"
-                              ? `http://172.24.98.143/${contest.id}/${voice.id}/getVoice`
-                              : `http://localhost:5000/${contest.id}/${voice.id}/getVoice`;
-                          aTag.target = "_blank";
-                          aTag.click();
-                        }}
-                        className="btn btn-primary"
-                      >
-                        Descargar
-                      </button>
-                      <audio autoPlay controls>
-                        <source id="source" />
-                      </audio>
-                    </div>
-                  </div>
-                </Col>
-              ))}
+              voices.map((voice, idx) => {
+                return (
+                  <VoiceDetail
+                    key={voice.id}
+                    voice={voice}
+                    idx={idx}
+                    contest={contest}
+                    page={page}
+                    setVoices={setVoices}
+                  />
+                );
+              })}
           </Row>
           <Row justify="center">
             <Col>
               <Pagination
                 defaultCurrent={page}
-                pageSize={20}
+                pageSize={40}
                 total={totalVoices}
                 onChange={(page) => setPage(page)}
               />

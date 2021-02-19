@@ -16,6 +16,7 @@ import re
 import os      # For File Manipulations like get paths, rename
 from flask import Flask, flash, request, redirect, render_template
 from werkzeug.utils import secure_filename
+from flask_mail import Mail, Message
 
 
 def authenticate(username, password):
@@ -113,6 +114,7 @@ class Voice(db.Model):
     observation_message = db.Column(db.String(500))
     post_date = db.Column(db.Date)
     state = db.Column(db.String(100))
+    filename = db.Column(db.String(100))
 
 
 class Contest_Shema(ma.Schema):
@@ -128,7 +130,7 @@ class User_Shema(ma.Schema):
 
 class Voice_Shema(ma.Schema):
     class Meta:
-        fields = ("id", "related_contest_id", "name", "last_name", "email",
+        fields = ("id", "related_contest_id", "name", "last_name", "email", "filename",
                   "original_voice_file_path", "transformed_voice_file_path", "observation_message", "post_date", "state")
 
 
@@ -142,17 +144,22 @@ post_voice_schema = Voice_Shema()
 posts_voice_schema = Voice_Shema(many=True)
 
 
-@app.route("/<int:id_contest>/<int:id_voice>/getVoice")
-def getVoice(id_contest, id_voice):
-    # print(os.path.dirname(__file__))
-    # print(os.path.join("originals"))
-    # print(os.path.join("originals/all-my-life.mp3"))
-    # send_file(
-    #      path_to_file,
-    #      mimetype="audio/wav",
-    #      as_attachment=True,
-    #      attachment_filename="test.wav")
-    return send_file(os.path.abspath("originals/all_my_life.mp3"), mimetype="audio/mpeg3", as_attachment=True, attachment_filename="all_my_life.mp3")
+@app.route("/<int:id_contest>/<int:id_voice>/downloadVoiceOriginal")
+def downloadVoice(id_contest, id_voice):
+    voice = Voice.query.filter_by(
+        related_contest_id=id_contest, id=id_voice).first()
+
+    return send_file(voice.original_voice_file_path, mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename)
+
+
+@app.route("/<int:id_contest>/<int:id_voice>/downloadVoiceConverted")
+def getVoiceConverted(id_contest, id_voice):
+    voice = Voice.query.filter_by(
+        related_contest_id=id_contest, id=id_voice).first()
+    extension = voice.filename.split(".")[1]
+    print(voice.transformed_voice_file_path)
+    print(voice.original_voice_file_path.replace(extension, "mp3"))
+    return send_file(voice.original_voice_file_path.replace(extension, "mp3"), mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename.replace(extension, "mp3"))
 
 
 @app.route("/<int:id_contest>/getLenVoices")
@@ -301,7 +308,7 @@ class ResourseOneContest(Resource):
 
 class ResourseListVoices(Resource):
     def get(self, id_contest, page=1):
-        per_page = 20
+        per_page = 40
         voices = Voice.query.filter_by(related_contest_id=id_contest).order_by(
             Voice.post_date.asc()).paginate(page, per_page, error_out=False)
         # "Ordenar por orden de insert en la tabla"
@@ -331,7 +338,7 @@ class ResourseListVoices(Resource):
             email=request.json['email'],
             observation_message=request.json['observation_message'],
             post_date=datetime.now(),
-            state="En proceso"
+            state="En proceso",
         )
         db.session.add(newVoice)
         db.session.commit()
@@ -351,21 +358,30 @@ class ResourseOneVoice(Resource):
         voice = Voice.query.filter_by(
             related_contest_id=id_contest, id=id_voice).first()
         file = request.files.get('audio_file')
+
         if file.filename == '':
             flash('No file selected for uploading')
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            prefix = str(id_contest) + "_" + str(id_voice) + "_"
+
             original_file_path = os.path.join(
-                app.config['ORIGINALS_FOLDER'], filename)
+                app.config['ORIGINALS_FOLDER'],  prefix + filename)
+
             unprocessed_file_path = os.path.join(
-                app.config['UNPROCESSED_FOLDER'], filename)
+                app.config['UNPROCESSED_FOLDER'],  prefix + filename)
+
+            transformed_file_path = os.path.join(
+                app.config['PROCESSED_FOLDER'], prefix + filename.split(".")[0] + ".mp3")
+            print(original_file_path)
+            print(transformed_file_path)
+
             file.save(original_file_path)
             file.save(unprocessed_file_path)
-            voice.original_voice_file_path = os.path.join(
-                app.config['UNPROCESSED_FOLDER'], filename)
-            converted_filename = filename.split(".")[0] + ".mp3"
-            voice.transformed_voice_file_path = os.path.join(
-                app.config['PROCESSED_FOLDER'], converted_filename)
+            file.save(transformed_file_path)
+            voice.original_voice_file_path = original_file_path
+            voice.transformed_voice_file_path = transformed_file_path
+            voice.filename = prefix + filename
             flash('File successfully uploaded')
         else:
             return {"error": "File format is not acceptable"}, 412
@@ -378,7 +394,7 @@ class ResourseOneVoice(Resource):
             related_contest_id=id_contest, id=id_voice).first()
         db.session.delete(voice)
         db.session.commit()
-        return "Voice deleted"
+        return post_voice_schema.dump(voice)
 
 
 class ResourceVoiceUpdater(Resource):
