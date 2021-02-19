@@ -377,8 +377,7 @@ class ResourceVoiceUpdater(Resource):
         s.login("voice.contest.cloud@gmail.com", "Cl0ud123") 
         voices = Voice.query.filter_by(state="En proceso").all()
         print(voices)
-        print(voices.items)
-        orderedListVoices = posts_voice_schema.dump(voices.items)
+        orderedListVoices = posts_voice_schema.dump(voices)
         print(orderedListVoices)
         processed_files = [f for f in listdir('/home/estudiante/VoiceContest/back/processed/') if isfile(join('/home/estudiante/VoiceContest/back/processed/', f))]
         for voice in orderedListVoices:
