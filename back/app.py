@@ -19,6 +19,7 @@ from werkzeug.utils import secure_filename
 from flask_mail import Mail, Message 
 from os import listdir
 from os.path import isfile, join
+import smtplib
 
 def authenticate(username, password):
     user = User.query.filter_by(username=username).first()
@@ -382,13 +383,19 @@ class ResourceVoiceUpdater(Resource):
         #         voice.state = "Procesada"
                 
         # db.session.commit()
-        msg = Message( 
-                    'Hello', 
-                    sender ='voice.contest.cloud@gmail.com', 
-                    recipients = ['da.babativa@uniandes.edu.co', 'da.babativa@outlook.com', 'babat00@outlook.com'] 
-                ) 
-        msg.body = 'Hello Flask message sent from Flask-Mail'
-        mail.send(msg) 
+        # msg = Message( 
+        #             'Hello', 
+        #             sender ='voice.contest.cloud@gmail.com', 
+        #             recipients = ['da.babativa@uniandes.edu.co', 'da.babativa@outlook.com', 'babat00@outlook.com'] 
+        #         ) 
+        # msg.body = 'Hello Flask message sent from Flask-Mail'
+        # mail.send(msg) 
+        s = smtplib.SMTP('smtp.gmail.com', 587) 
+        s.starttls()
+        s.login("voice.contest.cloud@gmail.com", "Cl0ud123") 
+        message = "Message_you_need_to_send"
+        s.sendmail("voice.contest.cloud@gmail.com", "babat00@outlook.com", message) 
+        s.quit() 
         return "result"
 
 
