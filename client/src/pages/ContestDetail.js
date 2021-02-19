@@ -119,6 +119,7 @@ const ContestDetail = () => {
         voice,
         token
       ).then((data) => {
+        console.log(data);
         if (!data.error) {
           setVoices((prevVoices) => [...prevVoices, data]);
         }
@@ -126,14 +127,18 @@ const ContestDetail = () => {
         formData.append("audio_file", file);
         const headers = new Headers();
         headers.append("Content-Type", "multipart/form-data");
-        fetch(`http://localhost:5000/contests/${contest.id}/voices/${data}`, {
+        const ENDPOINT =
+          process.env.NODE_ENV === "production"
+            ? `http://172.24.98.143/${contest.id}/${voice.id}/downloadVoiceConverted`
+            : `http://localhost:5000/${contest.id}/${voice.id}/downloadVoiceConverted`;
+        fetch(ENDPOINT, {
           method: "PUT",
           body: formData,
         });
         setRefresh(true);
       });
     } catch (e) {
-      console.error("error", e);
+      console.error("error subiendo voz", e);
     } finally {
     }
   }
