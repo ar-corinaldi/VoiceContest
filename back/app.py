@@ -413,9 +413,9 @@ class ResourceVoiceUpdater(Resource):
         s.starttls()
         s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
         voices = Voice.query.filter_by(state="En proceso").all()
-        print(voices)
+        print(voices, "voices")
         orderedListVoices = posts_voice_schema.dump(voices)
-        print(orderedListVoices)
+        print(orderedListVoices, "dump")
         processed_files = [f for f in listdir('/home/estudiante/VoiceContest/back/processed/') if isfile(
             join('/home/estudiante/VoiceContest/back/processed/', f))]
         for voice in orderedListVoices:
@@ -424,7 +424,7 @@ class ResourceVoiceUpdater(Resource):
                 voice.state = "Procesada"
                 message = "Su voz ha sido procesada"
                 s.sendmail("voice.contest.cloud@gmail.com",
-                           "babat00@outlook.com", message)
+                           voice.email, message)
         db.session.commit()
         s.quit()
         return "result"
