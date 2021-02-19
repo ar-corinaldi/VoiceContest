@@ -392,9 +392,9 @@ class ResourceVoiceUpdater(Resource):
         # mail.send(msg) 
         s = smtplib.SMTP('smtp.gmail.com', 587) 
         s.starttls()
-        s.login("voice.contest.cloud", "Cl0ud123") 
+        s.login("voice.contest.cloud@gmail.com", "Cl0ud123") 
         message = "Message_you_need_to_send"
-        s.sendmail("voice.contest.cloud", "babat00@outlook.com", message) 
+        s.sendmail("voice.contest.cloud@gmail.com", "babat00@outlook.com", message) 
         s.quit() 
         return "result"
 
