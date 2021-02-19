@@ -30,20 +30,23 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
     }
   };
   const getAudio = async () => {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const ENDPOINT =
-      process.env.NODE_ENV === "production"
-        ? `http://172.24.98.143/${contest.id}/${voice.id}/downloadVoiceConverted`
-        : `http://localhost:5000/${contest.id}/${voice.id}/downloadVoiceConverted`;
-    const res = await fetch(ENDPOINT);
-    console.log(res);
-    const audio = await res.blob();
-    let url = window.URL.createObjectURL(audio);
-    new Audio(audio);
-    setOriginalAudioURL(url);
-    console.log(url);
-    setIsLoading(false);
+      const ENDPOINT =
+        process.env.NODE_ENV === "production"
+          ? `http://172.24.98.143/${contest.id}/${voice.id}/downloadVoiceConverted`
+          : `http://localhost:5000/${contest.id}/${voice.id}/downloadVoiceConverted`;
+      const res = await fetch(ENDPOINT);
+      console.log(res);
+      const audio = await res.blob();
+      let url = window.URL.createObjectURL(audio);
+      new Audio(audio);
+      setOriginalAudioURL(url);
+      console.log(url);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const descargaConvertida = async () => {

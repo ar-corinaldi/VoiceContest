@@ -148,7 +148,7 @@ posts_voice_schema = Voice_Shema(many=True)
 def downloadVoice(id_contest, id_voice):
     voice = Voice.query.filter_by(
         related_contest_id=id_contest, id=id_voice).first()
-
+    print(voice.original_voice_file_path)
     return send_file(voice.original_voice_file_path, mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename)
 
 
@@ -342,7 +342,7 @@ class ResourseListVoices(Resource):
         )
         db.session.add(newVoice)
         db.session.commit()
-        return newVoice.id
+        return post_voice_schema.dump(voice)
 
 
 class ResourseOneVoice(Resource):
