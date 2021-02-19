@@ -389,7 +389,7 @@ class ResourceVoiceUpdater(Resource):
                 ) 
         msg.body = 'Hello Flask message sent from Flask-Mail'
         mail.send(msg) 
-        return result
+        return "result"
 
 
 api.add_resource(ResourceListUsers, '/users')
