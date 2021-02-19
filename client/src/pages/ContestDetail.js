@@ -13,13 +13,13 @@ import { Link, useParams, useHistory } from "react-router-dom";
 import { LoadingOutlined } from "@ant-design/icons";
 import { doFetch } from "../utils/useFetch";
 import { AuthContext } from "../App";
+import VoiceDetail from "../components/VoiceDetail";
 
 const ContestDetail = () => {
-  const [refresh, setRefresh]= useState(false);
+  const [refresh, setRefresh] = useState(false);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
   const [file, setFile] = useState();
   const [observaciones, setObservaciones] = useState("");
   const [contest, setContest] = useState();
@@ -30,6 +30,9 @@ const ContestDetail = () => {
   const { contestUrl } = useParams();
   const { token } = useContext(AuthContext);
   const history = useHistory();
+
+  console.log(page, totalVoices);
+
   useEffect(() => {
     async function getContest(url) {
       try {
@@ -267,30 +270,24 @@ const ContestDetail = () => {
           <Row justify="center">
             {voices && voices.length === 0 && <div>No hay voces!</div>}
             {voices &&
-              voices.map((voice, idx) => (
-                <Col key={voice.id} className="m-3">
-                  <div className="card">
-                    <h5 className="card-header">
-                      Audio # {idx + (page - 1) * 20 + 1}
-                    </h5>
-                    <div className="card-body">
-                      <h5 className="card-title">
-                        {voice.name + " " + voice.last_name}
-                      </h5>
-                      <p className="card-text">{voice.email}</p>
-                      <a href="#" className="btn btn-primary">
-                        Go somewhere
-                      </a>
-                    </div>
-                  </div>
-                </Col>
-              ))}
+              voices.map((voice, idx) => {
+                return (
+                  <VoiceDetail
+                    key={voice.id}
+                    voice={voice}
+                    idx={idx}
+                    contest={contest}
+                    page={page}
+                    setVoices={setVoices}
+                  />
+                );
+              })}
           </Row>
           <Row justify="center">
             <Col>
               <Pagination
                 defaultCurrent={page}
-                pageSize={20}
+                pageSize={40}
                 total={totalVoices}
                 onChange={(page) => setPage(page)}
               />
