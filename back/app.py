@@ -17,6 +17,9 @@ import os      # For File Manipulations like get paths, rename
 from flask import Flask, flash, request, redirect, render_template
 from werkzeug.utils import secure_filename
 from flask_mail import Mail, Message
+from os import listdir
+from os.path import isfile, join
+import smtplib
 
 
 def authenticate(username, password):
@@ -44,6 +47,11 @@ mail = Mail(app)
 app.config['SECRET_KEY'] = 'super-secret'
 # sqlite:///test.db
 # postgresql://postgres@172.24.98.83:5432/voice_contest_db
+
+# PROD
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
+
+# DEV
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
@@ -399,25 +407,25 @@ class ResourseOneVoice(Resource):
 
 class ResourceVoiceUpdater(Resource):
     def get(self):
-        voices = Voice.query.filter_by(state="En proceso")
-        result = posts_voice_schema.dump(voices.items)
+        s = smtplib.SMTP('smtp.gmail.com', 587)
+        s.starttls()
+        s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
+        voices = Voice.query.filter_by(state="En proceso").all()
+        print(voices)
+        orderedListVoices = posts_voice_schema.dump(voices)
+        print(orderedListVoices)
         processed_files = [f for f in listdir('/home/estudiante/VoiceContest/back/processed/') if isfile(
             join('/home/estudiante/VoiceContest/back/processed/', f))]
-        for voice in result:
+        for voice in orderedListVoices:
             processed_filename = voice.transformed_voice_file_path
             if processed_filename in processed_files:
                 voice.state = "Procesada"
-
+                message = "Su voz ha sido procesada"
+                s.sendmail("voice.contest.cloud@gmail.com",
+                           "babat00@outlook.com", message)
         db.session.commit()
-        msg = Message(
-            'Hello',
-            sender='voice.contest.cloud@gmail.com',
-            recipients=['da.babativa@uniandes.edu.co',
-                        'da.babativa@outlook.com', 'babat00@outlook.com']
-        )
-        msg.body = 'Hello Flask message sent from Flask-Mail'
-        mail.send(msg)
-        return result
+        s.quit()
+        return "result"
 
 
 api.add_resource(ResourceListUsers, '/users')
@@ -428,8 +436,7 @@ api.add_resource(ResourseListVoices,
                  '/contests/<int:id_contest>/voices/<int:page>')
 api.add_resource(ResourseOneVoice,
                  '/contests/<int:id_contest>/voices/<int:id_voice>')
-api.add_resource(ResourceVoiceUpdater,
-                 '/update-processed')
+api.add_resource(ResourceVoiceUpdater, '/update-processed')
 
 if __name__ == '__main__':
     db.create_all()
