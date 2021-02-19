@@ -372,23 +372,21 @@ class ResourseOneVoice(Resource):
 
 class ResourceVoiceUpdater(Resource):
     def get(self):
+        s = smtplib.SMTP('smtp.gmail.com', 587) 
+        s.starttls()
+        s.login("voice.contest.cloud@gmail.com", "Cl0ud123") 
         voices = Voice.query.filter_by(state="En proceso")
         print(voices)
         orderedListVoices = posts_voice_schema.dump(voices.items)
-        print(result)
+        print(orderedListVoices)
         processed_files = [f for f in listdir('/home/estudiante/VoiceContest/back/processed/') if isfile(join('/home/estudiante/VoiceContest/back/processed/', f))]
         for voice in orderedListVoices:
             processed_filename = voice.transformed_voice_file_path
             if processed_filename in processed_files:
                 voice.state = "Procesada"
-                
+                message = "Su voz ha sido procesada"
+                s.sendmail("voice.contest.cloud@gmail.com", "babat00@outlook.com", message)        
         db.session.commit()
-      
-        s = smtplib.SMTP('smtp.gmail.com', 587) 
-        s.starttls()
-        s.login("voice.contest.cloud@gmail.com", "Cl0ud123") 
-        message = "Message_you_need_to_send"
-        s.sendmail("voice.contest.cloud@gmail.com", "babat00@outlook.com", message) 
         s.quit() 
         return "result"
 
