@@ -423,7 +423,7 @@ class ResourceVoiceUpdater(Resource):
             # if processed_filename in processed_files:
             voice.state = "Procesada"
             message = "Su voz ha sido procesada"
-            s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
+            s.sendmail("voice.contest.cloud@gmail.com","da.babativa@uniandes.edu.co", message)
         db.session.commit()
         s.quit()
         return "result"
