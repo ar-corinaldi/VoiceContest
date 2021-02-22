@@ -84,9 +84,7 @@ const ContestDetail = () => {
     if (contest && contest.id) getVoices(contest.id);
   }, [contest, setIsLoading, setVoices, page]);
 
-  const onEdit = () => {
-
-  };
+  const onEdit = () => {};
 
   const onDelete = async () => {
     try {
@@ -122,17 +120,18 @@ const ContestDetail = () => {
       if (!data.error) {
         const formData = new FormData();
         formData.append("audio_file", file);
-        let res = await fetch(
-          `http://localhost:5000/contests/${contest.id}/voices/${data.id}`,
-          {
-            method: "PUT",
-            body: formData,
-          }
-        );
+        const ENDPOINT =
+          process.env.NODE_ENV === "production"
+            ? `http://172.24.98.143/${contest.id}/${voice.id}`
+            : `http://localhost:5000/${contest.id}/${voice.id}`;
+        let res = await fetch(ENDPOINT, {
+          method: "PUT",
+          body: formData,
+        });
         let x = await res.json();
         setVoices((prevVoices) => [...prevVoices, x]);
       }
-     } catch (e) {
+    } catch (e) {
       console.error("error subiendo voz", e);
     } finally {
     }
