@@ -34,7 +34,7 @@ export async function doFetch(url = "", method = "GET", body, token) {
       }
     }
     if (!res.ok) {
-      throw new Error("Request not fulfilled");
+      throw new Error(await res.json().error);
     }
     const data = await res.json();
     return data;
