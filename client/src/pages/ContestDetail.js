@@ -127,6 +127,9 @@ const ContestDetail = () => {
         let res = await fetch(ENDPOINT, {
           method: "PUT",
           body: formData,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         });
         let x = await res.json();
         setVoices((prevVoices) => [...prevVoices, x]);
