@@ -412,21 +412,24 @@ class ResourceVoiceUpdater(Resource):
         s = smtplib.SMTP('smtp.gmail.com', 587)
         s.starttls()
         s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
-        voices = Voice.query.filter_by(state="En proceso").all()
-        print(voices, "voices")
-        orderedListVoices = posts_voice_schema.dump(voices)
-        print(orderedListVoices, "dump")
+
+        message = "Su voz all-my-life.wav ha sido procesada y puede ser descargada"
+        s.sendmail("voice.contest.cloud@gmail.com","da.babativa@uniandes.edu.co", message)
+        # voices = Voice.query.filter_by(state="En proceso").all()
+        # print(voices, "voices")
+        # orderedListVoices = posts_voice_schema.dump(voices)
+        # print(orderedListVoices, "dump")
         # processed_files = [f for f in listdir('/home/estudiante/VoiceContest/back/processed/') if isfile(
         #     join('/home/estudiante/VoiceContest/back/processed/', f))]
-        for voice in orderedListVoices:
+        # for voice in orderedListVoices:
             # processed_filename = voice.transformed_voice_file_path
             # if processed_filename in processed_files:
-            voice.state = "Procesada"
-            message = "Su voz ha sido procesada"
-            s.sendmail("voice.contest.cloud@gmail.com","da.babativa@uniandes.edu.co", message)
-        db.session.commit()
+        #     voice.state = "Procesada"
+        #     message = "Su voz ha sido procesada"
+        #     s.sendmail("voice.contest.cloud@gmail.com","da.babativa@uniandes.edu.co", message)
+        # db.session.commit()
         s.quit()
-        return "result"
+        return "Voices updates and mail sent"
 
 
 api.add_resource(ResourceListUsers, '/users')
