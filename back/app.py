@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_file
 from flask import jsonify
 from flask_restful import Api, Resource
 from flask_sqlalchemy import SQLAlchemy
@@ -16,6 +16,11 @@ import re
 import os      # For File Manipulations like get paths, rename
 from flask import Flask, flash, request, redirect, render_template
 from werkzeug.utils import secure_filename
+from flask_mail import Mail, Message
+from os import listdir
+from os.path import isfile, join
+import smtplib
+
 
 def authenticate(username, password):
     user = User.query.filter_by(username=username).first()
@@ -28,7 +33,18 @@ def identity(payload):
     return User.query.filter_by(id=user_id).first()
 
 
-app = Flask(__name__, static_folder='../client/build')
+app = Flask(__name__, static_folder=os.path.dirname(__file__))
+
+mail = Mail(app) # instantiate the mail class 
+   
+# configuration of mail 
+app.config['MAIL_SERVER']='smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USERNAME'] = 'voice.contest.cloud@gmail.com'
+app.config['MAIL_PASSWORD'] = 'Cl0ud123'
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+mail = Mail(app)
 app.config['SECRET_KEY'] = 'super-secret'
 # sqlite:///test.db
 # postgresql://postgres@172.24.98.83:5432/voice_contest_db
@@ -43,8 +59,8 @@ migrate = Migrate(app, db)
 manager = Manager(app)
 
 manager.add_command('db', MigrateCommand)
-#It will allow below 16MB contents only, you can change it
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
+# It will allow below 16MB contents only, you can change it
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 path = os.getcwd()
 # file Upload
 
@@ -59,10 +75,12 @@ app.config['ORIGINALS_FOLDER'] = ORIGINALS_FOLDER
 app.config['UNPROCESSED_FOLDER'] = UNPROCESSED_FOLDER
 app.config['PROCESSED_FOLDER'] = PROCESSED_FOLDER
 
-ALLOWED_EXTENSIONS = set(['wav', 'mp3', 'ogg','mpeg'])
+ALLOWED_EXTENSIONS = set(['wav', 'mp3', 'ogg'])
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -100,6 +118,7 @@ class Voice(db.Model):
     observation_message = db.Column(db.String(500))
     post_date = db.Column(db.Date)
     state = db.Column(db.String(100))
+    filename = db.Column(db.String(100))
 
 
 class Contest_Shema(ma.Schema):
@@ -115,7 +134,7 @@ class User_Shema(ma.Schema):
 
 class Voice_Shema(ma.Schema):
     class Meta:
-        fields = ("id", "related_contest_id", "name", "last_name", "email",
+        fields = ("id", "related_contest_id", "name", "last_name", "email", "filename",
                   "original_voice_file_path", "transformed_voice_file_path", "observation_message", "post_date", "state")
 
 
@@ -127,6 +146,24 @@ posts_user_schema = User_Shema(many=True)
 
 post_voice_schema = Voice_Shema()
 posts_voice_schema = Voice_Shema(many=True)
+
+
+@app.route("/<int:id_contest>/<int:id_voice>/downloadVoiceOriginal")
+def downloadVoice(id_contest, id_voice):
+    voice = Voice.query.filter_by(
+        related_contest_id=id_contest, id=id_voice).first()
+    print(voice.original_voice_file_path)
+    return send_file(voice.original_voice_file_path, mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename)
+
+
+@app.route("/<int:id_contest>/<int:id_voice>/downloadVoiceConverted")
+def getVoiceConverted(id_contest, id_voice):
+    voice = Voice.query.filter_by(
+        related_contest_id=id_contest, id=id_voice).first()
+    extension = voice.filename.split(".")[1]
+    print(voice.transformed_voice_file_path)
+    print(voice.original_voice_file_path.replace(extension, "mp3"))
+    return send_file(voice.original_voice_file_path.replace(extension, "mp3"), mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename.replace(extension, "mp3"))
 
 
 @app.route("/<int:id_contest>/getLenVoices")
@@ -275,7 +312,7 @@ class ResourseOneContest(Resource):
 
 class ResourseListVoices(Resource):
     def get(self, id_contest, page=1):
-        per_page = 20
+        per_page = 40
         voices = Voice.query.filter_by(related_contest_id=id_contest).order_by(
             Voice.post_date.asc()).paginate(page, per_page, error_out=False)
         # "Ordenar por orden de insert en la tabla"
@@ -305,11 +342,11 @@ class ResourseListVoices(Resource):
             email=request.json['email'],
             observation_message=request.json['observation_message'],
             post_date=datetime.now(),
-            state="En proceso"
+            state="En proceso",
         )
         db.session.add(newVoice)
         db.session.commit()
-        return newVoice.id
+        return post_voice_schema.dump(newVoice)
 
 
 class ResourseOneVoice(Resource):
@@ -322,17 +359,34 @@ class ResourseOneVoice(Resource):
         return result
 
     def put(self, id_contest, id_voice):
-        voice = Voice.query.filter_by(related_contest_id=id_contest, id=id_voice).first()
+        print("PUT")
+        voice = Voice.query.filter_by(
+            related_contest_id=id_contest, id=id_voice).first()
         file = request.files.get('audio_file')
+
         if file.filename == '':
             flash('No file selected for uploading')
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            original_file_path = os.path.join(app.config['ORIGINALS_FOLDER'], filename)
-            unprocessed_file_path = os.path.join(app.config['UNPROCESSED_FOLDER'], filename)
+            prefix = str(id_contest) + "_" + str(id_voice) + "_"
+
+            original_file_path = os.path.join(
+                app.config['ORIGINALS_FOLDER'],  prefix + filename)
+
+            unprocessed_file_path = os.path.join(
+                app.config['UNPROCESSED_FOLDER'],  prefix + filename)
+            print(original_file_path,"PRINT DEL PUT")
+
+            transformed_file_path = os.path.join(
+                app.config['PROCESSED_FOLDER'], prefix + filename.split(".")[0] + ".mp3")
+            print(transformed_file_path)
+
             file.save(original_file_path)
             file.save(unprocessed_file_path)
-            voice.original_voice_file_path=os.path.join(app.config['UNPROCESSED_FOLDER'], filename)
+            file.save(transformed_file_path)
+            voice.original_voice_file_path = original_file_path
+            voice.transformed_voice_file_path = transformed_file_path
+            voice.filename = prefix + filename
             flash('File successfully uploaded')
         else:
             return {"error": "File format is not acceptable"}, 412
@@ -345,7 +399,30 @@ class ResourseOneVoice(Resource):
             related_contest_id=id_contest, id=id_voice).first()
         db.session.delete(voice)
         db.session.commit()
-        return "Voice deleted"
+        return post_voice_schema.dump(voice)
+
+
+class ResourceVoiceUpdater(Resource):
+    def get(self):
+        s = smtplib.SMTP('smtp.gmail.com', 587)
+        s.starttls()
+        s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
+        voices = Voice.query.filter_by(state="En proceso").all()
+        print(voices, "voices")
+        orderedListVoices = posts_voice_schema.dump(voices)
+        print(orderedListVoices, "dump")
+        # processed_files = [f for f in listdir('/home/estudiante/VoiceContest/back/processed/') if isfile(
+        #     join('/home/estudiante/VoiceContest/back/processed/', f))]
+        for voice in orderedListVoices:
+            # processed_filename = voice.transformed_voice_file_path
+            # if processed_filename in processed_files:
+            voice.state = "Procesada"
+            message = "Su voz ha sido procesada"
+            s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
+        db.session.commit()
+        s.quit()
+        return "result"
+
 
 api.add_resource(ResourceListUsers, '/users')
 api.add_resource(ResourceOneUser, '/users')
@@ -355,6 +432,7 @@ api.add_resource(ResourseListVoices,
                  '/contests/<int:id_contest>/voices/<int:page>')
 api.add_resource(ResourseOneVoice,
                  '/contests/<int:id_contest>/voices/<int:id_voice>')
+api.add_resource(ResourceVoiceUpdater, '/update-processed')
 
 if __name__ == '__main__':
     db.create_all()
