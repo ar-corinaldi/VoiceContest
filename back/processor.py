@@ -4,7 +4,7 @@ from os import listdir
 from os.path import isfile, join
 
 
-onlyfiles = [f for f in listdir('/home/estudiante/VoiceContest/back/unprocessed/') if isfile(join('/home/estudiante/VoiceContest/back/unprocessed/', f))]
+onlyfiles = [f for f in listdir('/home/estudiante/VoiceContest/back/processed/') if isfile(join('/home/estudiante/VoiceContest/back/processed/', f))]
 
 print(onlyfiles)
 
