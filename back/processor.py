@@ -13,5 +13,5 @@ for f in onlyfiles:
     command = f"ffmpeg -i /home/estudiante/VoiceContest/back/unprocessed/{f} /home/estudiante/VoiceContest/back/unprocessed/{f_no_extension}.wav"
     print(command)
     os.system(command)
-    delete_command = f"rm /home/estudiante/VoiceContest/back/unprocessed/{f}"
+    # delete_command = f"rm /home/estudiante/VoiceContest/back/unprocessed/{f}"
     os.system(delete_command)
