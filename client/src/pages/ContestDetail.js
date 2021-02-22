@@ -122,8 +122,8 @@ const ContestDetail = () => {
         formData.append("audio_file", file);
         const ENDPOINT =
           process.env.NODE_ENV === "production"
-            ? `http://172.24.98.143/${contest.id}/${voice.id}`
-            : `http://localhost:5000/${contest.id}/${voice.id}`;
+            ? `http://172.24.98.143/contests/${contest.id}/voices/${data.id}`
+            : `http://localhost:5000/contests/${contest.id}/voices/${data.id}`;
         let res = await fetch(ENDPOINT, {
           method: "PUT",
           body: formData,
