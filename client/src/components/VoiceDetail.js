@@ -50,7 +50,6 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
   };
 
   const descargaConvertida = async () => {
-    console.log("Entra");
     const ENDPOINT =
       process.env.NODE_ENV === "production"
         ? `http://172.24.98.143/${contest.id}/${voice.id}/downloadVoiceConverted`
@@ -62,7 +61,10 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
     console.log(audio);
 
     let aTag = document.createElement("a");
-    aTag.href = ENDPOINT;
+    aTag.href =
+      process.env.NODE_ENV === "production"
+        ? `/home/estudiante/VoiceContest/back/processed/${voice.filename}`
+        : ENDPOINT;
 
     aTag.target = "_blank";
     aTag.click();
@@ -84,7 +86,10 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
                 const res = await fetch(ENDPOINT);
                 console.log(res);
                 let aTag = document.createElement("a");
-                aTag.href = ENDPOINT;
+                aTag.href =
+                  process.env.NODE_ENV === "production"
+                    ? `/home/estudiante/VoiceContest/back/originals/${voice.filename}`
+                    : ENDPOINT;
 
                 aTag.target = "_blank";
                 aTag.click();
@@ -104,7 +109,11 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
           )}
           {!isLoading && !!originalAudioURL && (
             <audio controls>
-              <source id="original" src={originalAudioURL} type="audio/mp3" />
+              <source
+                id="original"
+                src={`/home/estudiante/VoiceContest/back/processed/${voice.filename}`}
+                type="audio/mp3"
+              />
             </audio>
           )}
         </div>
