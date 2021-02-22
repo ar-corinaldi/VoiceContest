@@ -158,10 +158,12 @@ def downloadVoice(id_contest, id_voice):
 
 @app.route("/<int:id_contest>/<int:id_voice>/downloadVoiceConverted")
 def getVoiceConverted(id_contest, id_voice):
+    print("ACAAAAA")
     voice = Voice.query.filter_by(
-        related_contest_id=id_contest, id=id_voice).first()
+            related_contest_id=id_contest, id=id_voice).first()
+    print(voice.filename,"SI")
     extension = voice.filename.split(".")[1]
-    print(voice.transformed_voice_file_path)
+    print(voice.transformed_voice_file_path, "PRINT 2")
     print(voice.original_voice_file_path.replace(extension, "mp3"))
     return send_file(voice.original_voice_file_path.replace(extension, "mp3"), mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename.replace(extension, "mp3"))
 
@@ -342,7 +344,7 @@ class ResourseListVoices(Resource):
             email=request.json['email'],
             observation_message=request.json['observation_message'],
             post_date=datetime.now(),
-            state="En proceso",
+            state="En proceso"
         )
         db.session.add(newVoice)
         db.session.commit()
@@ -359,7 +361,6 @@ class ResourseOneVoice(Resource):
         return result
 
     def put(self, id_contest, id_voice):
-        print("PUT")
         voice = Voice.query.filter_by(
             related_contest_id=id_contest, id=id_voice).first()
         file = request.files.get('audio_file')
@@ -375,7 +376,6 @@ class ResourseOneVoice(Resource):
 
             unprocessed_file_path = os.path.join(
                 app.config['UNPROCESSED_FOLDER'],  prefix + filename)
-            print(original_file_path,"PRINT DEL PUT")
 
             transformed_file_path = os.path.join(
                 app.config['PROCESSED_FOLDER'], prefix + filename.split(".")[0] + ".mp3")
@@ -387,6 +387,7 @@ class ResourseOneVoice(Resource):
             voice.original_voice_file_path = original_file_path
             voice.transformed_voice_file_path = transformed_file_path
             voice.filename = prefix + filename
+            print(voice.filename,"PRINT EN EL PUT")
             flash('File successfully uploaded')
         else:
             return {"error": "File format is not acceptable"}, 412
