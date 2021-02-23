@@ -421,11 +421,12 @@ class ResourceVoiceUpdater(Resource):
             print(voice.__dict__, "actual dict")
             voice.state = "Procesada"
             message = "Su voz ha sido procesada"
+            db.session.commit()
             try:
                 s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
             except:
                 print("Something happened whilst sending the mail")
-        db.session.commit()
+        
         s.quit()
         return "result"
 
