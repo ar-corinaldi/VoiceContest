@@ -413,10 +413,10 @@ class ResourceVoiceUpdater(Resource):
         s.starttls()
         s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
         voices = Voice.query.filter_by(state="En proceso").all()
-        print(voices, "las voces")
-        orderedListVoices = posts_voice_schema.dump(voices)
-        print(orderedListVoices, "después del dump")
-        for voice in orderedListVoices:
+        # print(voices, "las voces")
+        # orderedListVoices = posts_voice_schema.dump(voices)
+        # print(orderedListVoices, "después del dump")
+        for voice in voices:
             print(voice, "la actual")
             voice.state = "Procesada"
             message = "Su voz ha sido procesada"
