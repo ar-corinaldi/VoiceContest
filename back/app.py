@@ -48,13 +48,7 @@ mail = Mail(app)
 app.config['SECRET_KEY'] = 'super-secret'
 # sqlite:///test.db
 # postgresql://postgres@172.24.98.83:5432/voice_contest_db
-
-# PROD
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
-
-# DEV
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db = SQLAlchemy(app)
@@ -164,10 +158,12 @@ def downloadVoice(id_contest, id_voice):
 
 @app.route("/<int:id_contest>/<int:id_voice>/downloadVoiceConverted")
 def getVoiceConverted(id_contest, id_voice):
+    print("ACAAAAA")
     voice = Voice.query.filter_by(
-        related_contest_id=id_contest, id=id_voice).first()
+            related_contest_id=id_contest, id=id_voice).first()
+    print(voice.filename,"SI")
     extension = voice.filename.split(".")[1]
-    print(voice.transformed_voice_file_path)
+    print(voice.transformed_voice_file_path, "PRINT 2")
     print(voice.original_voice_file_path.replace(extension, "mp3"))
     return send_file(voice.original_voice_file_path.replace(extension, "mp3"), mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename.replace(extension, "mp3"))
 
@@ -348,11 +344,11 @@ class ResourseListVoices(Resource):
             email=request.json['email'],
             observation_message=request.json['observation_message'],
             post_date=datetime.now(),
-            state="En proceso",
+            state="En proceso"
         )
         db.session.add(newVoice)
         db.session.commit()
-        return post_voice_schema.dump(voice)
+        return post_voice_schema.dump(newVoice)
 
 
 class ResourseOneVoice(Resource):
@@ -367,8 +363,12 @@ class ResourseOneVoice(Resource):
     def put(self, id_contest, id_voice):
         voice = Voice.query.filter_by(
             related_contest_id=id_contest, id=id_voice).first()
+        
+        print(request.files)
+        if 'audio_file' not in request.files:
+            return {'error': 'file not found'}
         file = request.files.get('audio_file')
-
+        print(file)
         if file.filename == '':
             flash('No file selected for uploading')
         if file and allowed_file(file.filename):
@@ -383,7 +383,6 @@ class ResourseOneVoice(Resource):
 
             transformed_file_path = os.path.join(
                 app.config['PROCESSED_FOLDER'], prefix + filename.split(".")[0] + ".mp3")
-            print(original_file_path)
             print(transformed_file_path)
 
             file.save(original_file_path)
@@ -392,6 +391,7 @@ class ResourseOneVoice(Resource):
             voice.original_voice_file_path = original_file_path
             voice.transformed_voice_file_path = transformed_file_path
             voice.filename = prefix + filename
+            print(voice.filename,"PRINT EN EL PUT")
             flash('File successfully uploaded')
         else:
             return {"error": "File format is not acceptable"}, 412
@@ -438,5 +438,5 @@ api.add_resource(ResourceVoiceUpdater, '/update-processed')
 
 if __name__ == '__main__':
     db.create_all()
-    # manager.run()
-    app.run(debug=True, use_reloader=True)
+    manager.run()
+    #app.run(debug=True, use_reloader=True)

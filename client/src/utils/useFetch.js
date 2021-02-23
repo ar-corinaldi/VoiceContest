@@ -1,5 +1,5 @@
 export async function doFetch(url = "", method = "GET", body, token) {
-  let URL = `http://localhost:5000${url}`;
+  let URL = `http://172.24.98.143:4000${url}`;
   console.log(process.env.NODE_ENV);
   if (process.env.NODE_ENV === "production") {
     URL = `http://172.24.98.143${url}`;
@@ -34,7 +34,7 @@ export async function doFetch(url = "", method = "GET", body, token) {
       }
     }
     if (!res.ok) {
-      throw new Error("Request not fulfilled");
+      throw new Error(await res.json().error);
     }
     const data = await res.json();
     return data;

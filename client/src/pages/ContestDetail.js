@@ -16,7 +16,6 @@ import { AuthContext } from "../App";
 import VoiceDetail from "../components/VoiceDetail";
 
 const ContestDetail = () => {
-  const [refresh, setRefresh] = useState(false);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -30,8 +29,6 @@ const ContestDetail = () => {
   const { contestUrl } = useParams();
   const { token } = useContext(AuthContext);
   const history = useHistory();
-
-  console.log(page, totalVoices);
 
   useEffect(() => {
     async function getContest(url) {
@@ -85,7 +82,7 @@ const ContestDetail = () => {
     }
 
     if (contest && contest.id) getVoices(contest.id);
-  }, [contest, setIsLoading, setVoices, page, refresh]);
+  }, [contest, setIsLoading, setVoices, page]);
 
   const onEdit = () => {};
 
@@ -113,30 +110,30 @@ const ContestDetail = () => {
         email: email,
         observation_message: observaciones,
       };
-      doFetch(
+      let data = await doFetch(
         `/contests/${contest.id}/voices/${page}`,
         "POST",
         voice,
         token
-      ).then((data) => {
-        console.log(data);
-        if (!data.error) {
-          setVoices((prevVoices) => [...prevVoices, data]);
-        }
+      );
+      console.log(data);
+      if (!data.error) {
         const formData = new FormData();
         formData.append("audio_file", file);
-        const headers = new Headers();
-        headers.append("Content-Type", "multipart/form-data");
         const ENDPOINT =
           process.env.NODE_ENV === "production"
-            ? `http://172.24.98.143/${contest.id}/${voice.id}/downloadVoiceConverted`
-            : `http://localhost:5000/${contest.id}/${voice.id}/downloadVoiceConverted`;
-        fetch(ENDPOINT, {
+            ? `http://172.24.98.143/contests/${contest.id}/voices/${data.id}`
+            : `http://172.24.98.143:4000/contests/${contest.id}/voices/${data.id}`;
+        console.log("ENDPOINT FETCH PUT:",ENDPOINT );
+	console.log(file, formData);
+	let res = await fetch(ENDPOINT, {
           method: "PUT",
           body: formData,
         });
-        setRefresh(true);
-      });
+	console.log("RESPONSE FETCH PUT:",res);
+        let x = await res.json();
+        setVoices((prevVoices) => [...prevVoices, x]);
+      }
     } catch (e) {
       console.error("error subiendo voz", e);
     } finally {

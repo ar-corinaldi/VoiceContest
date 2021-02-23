@@ -3,10 +3,19 @@ import { Col, Button } from "antd";
 import { AuthContext } from "../App";
 import { doFetch } from "../utils/useFetch";
 
+let ENDPOINT;
 function VoiceDetail({ voice, page, idx, contest, setVoices }) {
   const [originalAudioURL, setOriginalAudioURL] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { token } = useContext(AuthContext);
+
+  useEffect(() => {
+    ENDPOINT =
+      process.env.NODE_ENV === "production"
+        ? `http://172.24.98.143/${contest.id}/${voice.id}/downloadVoiceOriginal`
+        : `http://172.24.98.143:4000/${contest.id}/${voice.id}/downloadVoiceOriginal`;
+	console.log(ENDPOINT);
+  }, [contest.id, voice.id]);
 
   useEffect(() => {
     if (voice && voice.state && voice.state.toLowerCase() === "convertida") {
@@ -32,11 +41,6 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
   const getAudio = async () => {
     try {
       setIsLoading(true);
-
-      const ENDPOINT =
-        process.env.NODE_ENV === "production"
-          ? `http://172.24.98.143/${contest.id}/${voice.id}/downloadVoiceConverted`
-          : `http://localhost:5000/${contest.id}/${voice.id}/downloadVoiceConverted`;
       const res = await fetch(ENDPOINT);
       console.log(res);
       const audio = await res.blob();
@@ -50,11 +54,6 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
   };
 
   const descargaConvertida = async () => {
-    console.log("Entra");
-    const ENDPOINT =
-      process.env.NODE_ENV === "production"
-        ? `http://172.24.98.143/${contest.id}/${voice.id}/downloadVoiceConverted`
-        : `http://localhost:5000/${contest.id}/${voice.id}/downloadVoiceConverted`;
     console.log(ENDPOINT);
     const res = await fetch(ENDPOINT);
     console.log(res);
@@ -62,7 +61,10 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
     console.log(audio);
 
     let aTag = document.createElement("a");
-    aTag.href = ENDPOINT;
+    aTag.href =
+      process.env.NODE_ENV === "production"
+        ? `/home/estudiante/VoiceContest/back/processed/${voice.filename}`
+        : ENDPOINT;
 
     aTag.target = "_blank";
     aTag.click();
@@ -77,14 +79,13 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
           <div className="d-flex justify-center">
             <Button
               onClick={async () => {
-                const ENDPOINT =
-                  process.env.NODE_ENV === "production"
-                    ? `http://172.24.98.143/${contest.id}/${voice.id}/downloadVoiceOriginal`
-                    : `http://localhost:5000/${contest.id}/${voice.id}/downloadVoiceOriginal`;
-                const res = await fetch(ENDPOINT);
-                console.log(res);
+                // const res = await fetch(ENDPOINT);
+                // console.log(res);
                 let aTag = document.createElement("a");
-                aTag.href = ENDPOINT;
+                aTag.href =
+                  process.env.NODE_ENV === "production"
+                    ? `/home/estudiante/VoiceContest/back/originals/${voice.filename}`
+                    : ENDPOINT;
 
                 aTag.target = "_blank";
                 aTag.click();
@@ -97,14 +98,22 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
               Descargar Convertida
             </Button>
           </div>
-          {isLoading && !originalAudioURL && (
+          {isLoading && (
             <div class="spinner-border" role="status">
               <span class="sr-only">Loading...</span>
             </div>
           )}
-          {!isLoading && !!originalAudioURL && (
+          {!isLoading && (
             <audio controls>
-              <source id="original" src={originalAudioURL} type="audio/mp3" />
+              <source
+                id="original"
+                src={
+                  process.env.NODE_ENV === "production"
+                    ? `/home/estudiante/VoiceContest/back/processed/${voice.filename}`
+                    : ENDPOINT
+                }
+                type="audio/mp3"
+              />
             </audio>
           )}
         </div>
