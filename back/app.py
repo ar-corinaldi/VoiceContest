@@ -418,9 +418,13 @@ class ResourceVoiceUpdater(Resource):
         # print(orderedListVoices, "después del dump")
         for voice in voices:
             print(voice, "la actual")
+            print(voice.__dict__, "actual dict")
             voice.state = "Procesada"
             message = "Su voz ha sido procesada"
-            s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
+            try:
+                s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
+            except:
+                print("Something happened whilst sending the mail")
         db.session.commit()
         s.quit()
         return "result"
