@@ -48,7 +48,7 @@ mail = Mail(app)
 app.config['SECRET_KEY'] = 'super-secret'
 # sqlite:///test.db
 # postgresql://postgres@172.24.98.83:5432/voice_contest_db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db = SQLAlchemy(app)
@@ -363,8 +363,12 @@ class ResourseOneVoice(Resource):
     def put(self, id_contest, id_voice):
         voice = Voice.query.filter_by(
             related_contest_id=id_contest, id=id_voice).first()
+        
+        print(request.files)
+        if 'audio_file' not in request.files:
+            return {'error': 'file not found'}
         file = request.files.get('audio_file')
-
+        print(file)
         if file.filename == '':
             flash('No file selected for uploading')
         if file and allowed_file(file.filename):
@@ -437,5 +441,5 @@ api.add_resource(ResourceVoiceUpdater, '/update-processed')
 
 if __name__ == '__main__':
     db.create_all()
-    # manager.run()
-    app.run(debug=True, use_reloader=True)
+    manager.run()
+    #app.run(debug=True, use_reloader=True)

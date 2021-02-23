@@ -13,7 +13,8 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
     ENDPOINT =
       process.env.NODE_ENV === "production"
         ? `http://172.24.98.143/${contest.id}/${voice.id}/downloadVoiceOriginal`
-        : `http://localhost:5000/${contest.id}/${voice.id}/downloadVoiceOriginal`;
+        : `http://172.24.98.143:4000/${contest.id}/${voice.id}/downloadVoiceOriginal`;
+	console.log(ENDPOINT);
   }, [contest.id, voice.id]);
 
   useEffect(() => {
@@ -97,12 +98,12 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
               Descargar Convertida
             </Button>
           </div>
-          {isLoading && !originalAudioURL && (
+          {isLoading && (
             <div class="spinner-border" role="status">
               <span class="sr-only">Loading...</span>
             </div>
           )}
-          {!isLoading && !!originalAudioURL && (
+          {!isLoading && (
             <audio controls>
               <source
                 id="original"
