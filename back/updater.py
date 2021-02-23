@@ -6,4 +6,4 @@ try:
     print("post")
     print(r)
 except:
-    print("ERRROR FEtiDO")
+    print("ERRROR")

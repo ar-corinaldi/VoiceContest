@@ -48,7 +48,7 @@ mail = Mail(app)
 app.config['SECRET_KEY'] = 'super-secret'
 # sqlite:///test.db
 # postgresql://postgres@172.24.98.83:5432/voice_contest_db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db = SQLAlchemy(app)
@@ -363,8 +363,12 @@ class ResourseOneVoice(Resource):
     def put(self, id_contest, id_voice):
         voice = Voice.query.filter_by(
             related_contest_id=id_contest, id=id_voice).first()
+        
+        print(request.files)
+        if 'audio_file' not in request.files:
+            return {'error': 'file not found'}
         file = request.files.get('audio_file')
-
+        print(file)
         if file.filename == '':
             flash('No file selected for uploading')
         if file and allowed_file(file.filename):
@@ -409,18 +413,20 @@ class ResourceVoiceUpdater(Resource):
         s.starttls()
         s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
         voices = Voice.query.filter_by(state="En proceso").all()
-        print(voices, "voices")
-        orderedListVoices = posts_voice_schema.dump(voices)
-        print(orderedListVoices, "dump")
-        # processed_files = [f for f in listdir('/home/estudiante/VoiceContest/back/processed/') if isfile(
-        #     join('/home/estudiante/VoiceContest/back/processed/', f))]
-        for voice in orderedListVoices:
-            # processed_filename = voice.transformed_voice_file_path
-            # if processed_filename in processed_files:
+        # print(voices, "las voces")
+        # orderedListVoices = posts_voice_schema.dump(voices)
+        # print(orderedListVoices, "después del dump")
+        for voice in voices:
+            print(voice, "la actual")
+            print(voice.__dict__, "actual dict")
             voice.state = "Procesada"
             message = "Su voz ha sido procesada"
-            s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
-        db.session.commit()
+            db.session.commit()
+            try:
+                s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
+            except:
+                print("Something happened whilst sending the mail")
+        
         s.quit()
         return "result"
 
@@ -437,5 +443,5 @@ api.add_resource(ResourceVoiceUpdater, '/update-processed')
 
 if __name__ == '__main__':
     db.create_all()
-    # manager.run()
-    app.run(debug=True, use_reloader=True)
+    manager.run()
+    #app.run(debug=True, use_reloader=True)
