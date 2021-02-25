@@ -417,7 +417,7 @@ class ResourceVoiceUpdater(Resource):
         voices = Voice.query.filter_by(state="En proceso").all()
         print(voices, "all voices")
         for voice in voices:
-            unprocessed_route = route + "/unprocessed/" + voice.filename
+            unprocessed_route = route + "/originals/" + voice.filename
             f_no_extension = voice.filename.split(".")[0]
             processed_route = route + "/processed/" + f_no_extension + ".mp3"
             print(voice, "la actual")
