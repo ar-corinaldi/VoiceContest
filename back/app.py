@@ -423,7 +423,7 @@ class ResourceVoiceUpdater(Resource):
             print(voice, "la actual")
             print(unprocessed_route, processed_route)
             try:
-                command = f"ffmpeg -i {unprocessed_route} {processed_route}"
+                command = f"sudo ffmpeg -i {unprocessed_route} {processed_route}"
                 os.system(command)
             except:
                 print("except files")
