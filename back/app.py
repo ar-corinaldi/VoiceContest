@@ -34,7 +34,7 @@ def identity(payload):
 
 
 app = Flask(__name__, static_folder=os.path.dirname(__file__))
-
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024    # 50 Mb limit
 mail = Mail(app) # instantiate the mail class 
    
 # configuration of mail 
@@ -165,7 +165,7 @@ def getVoiceConverted(id_contest, id_voice):
     extension = voice.filename.split(".")[1]
     print(voice.transformed_voice_file_path, "PRINT 2")
     print(voice.original_voice_file_path.replace(extension, "mp3"))
-    return send_file(voice.original_voice_file_path.replace(extension, "mp3"), mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename.replace(extension, "mp3"))
+    return send_file(voice.transformed_voice_file_path, mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename.replace(extension, "mp3"))
 
 
 @app.route("/<int:id_contest>/getLenVoices")
@@ -361,10 +361,10 @@ class ResourseOneVoice(Resource):
         return result
 
     def put(self, id_contest, id_voice):
+        print(id_contest, id_voice)
         voice = Voice.query.filter_by(
             related_contest_id=id_contest, id=id_voice).first()
-        
-        print(request.files)
+
         if 'audio_file' not in request.files:
             return {'error': 'file not found'}
         file = request.files.get('audio_file')
@@ -387,7 +387,7 @@ class ResourseOneVoice(Resource):
 
             file.save(original_file_path)
             file.save(unprocessed_file_path)
-            file.save(transformed_file_path)
+            #file.save(transformed_file_path)
             voice.original_voice_file_path = original_file_path
             voice.transformed_voice_file_path = transformed_file_path
             voice.filename = prefix + filename
@@ -443,5 +443,5 @@ api.add_resource(ResourceVoiceUpdater, '/update-processed')
 
 if __name__ == '__main__':
     db.create_all()
-    manager.run()
-    #app.run(debug=True, use_reloader=True)
+    #manager.run()
+    app.run(debug=True, use_reloader=True)
