@@ -435,6 +435,7 @@ class ResourceVoiceUpdater(Resource):
             print(message, "EL MENSAJE")
             db.session.commit()
             try:
+                print(voice.email, "El correo")
                 s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
             except:
                 print("except mail")
