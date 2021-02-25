@@ -409,23 +409,31 @@ class ResourseOneVoice(Resource):
 
 class ResourceVoiceUpdater(Resource):
     def get(self):
+        route = "/home/estudiante/VoiceContest/back"
         s = smtplib.SMTP('smtp.gmail.com', 587)
         s.starttls()
         s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
         voices = Voice.query.filter_by(state="En proceso").all()
-        # print(voices, "las voces")
-        # orderedListVoices = posts_voice_schema.dump(voices)
-        # print(orderedListVoices, "después del dump")
         for voice in voices:
+            unprocessed_route = route + "/unprocessed/" + voice.filename
+            f_no_extension = voice.filename.split(".")[0]
+            processed_route = route + "/processed/" + f_no_extension + ".mp3"
             print(voice, "la actual")
-            print(voice.__dict__, "actual dict")
+            print(unprocessed_route, processed_route)
+            try:
+                command = f"ffmpeg -i {unprocessed_route} {processed_route}"
+                os.system(command)
+            except:
+                return "Something occurred whils processing the voie"
+
+
             voice.state = "Procesada"
             message = "Su voz ha sido procesada"
             db.session.commit()
             try:
                 s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
             except:
-                print("Something happened whilst sending the mail")
+                return "Something happened whilst sending the mail"
         
         s.quit()
         return "result"
