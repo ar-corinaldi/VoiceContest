@@ -409,7 +409,7 @@ class ResourseOneVoice(Resource):
 
 class ResourceVoiceUpdater(Resource):
     def get(self):
-        message = "OK"
+        exit_message = "OK"
         route = "/home/estudiante/VoiceContest/back"
         s = smtplib.SMTP('smtp.gmail.com', 587)
         s.starttls()
@@ -426,7 +426,8 @@ class ResourceVoiceUpdater(Resource):
                 command = f"ffmpeg -i {unprocessed_route} {processed_route}"
                 os.system(command)
             except:
-                message = "Something occurred whils processing the voie"
+                print("except files")
+                exit_message = "Something occurred whils processing the voie"
 
 
             voice.state = "Procesada"
@@ -435,10 +436,11 @@ class ResourceVoiceUpdater(Resource):
             try:
                 s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
             except:
-                message = "Something happened whilst sending the mail"
+                print("except mail")
+                exit_message = "Something happened whilst sending the mail"
         
         s.quit()
-        return message
+        return exit_message
 
 
 api.add_resource(ResourceListUsers, '/users')
