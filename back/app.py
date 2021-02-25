@@ -431,7 +431,7 @@ class ResourceVoiceUpdater(Resource):
 
 
             voice.state = "Procesada"
-            message = "Buen día {}\n Su voz {} ha sido procesada \n Feliz día.".format(voice.name, voice.filename)
+            message = "Buen día {}. Su voz {} ha sido procesada. Feliz día.".format(voice.name, voice.filename)
             print(message, "EL MENSAJE")
             db.session.commit()
             try:
