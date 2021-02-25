@@ -431,7 +431,7 @@ class ResourceVoiceUpdater(Resource):
 
 
             voice.state = "Procesada"
-            message = "Su voz ha sido procesada"
+            message = "Buen día {}\n Su voz {} ha sido procesada \n Feliz día.".format(voice.name, voice.filename)
             db.session.commit()
             try:
                 s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
