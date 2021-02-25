@@ -414,6 +414,7 @@ class ResourceVoiceUpdater(Resource):
         s.starttls()
         s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
         voices = Voice.query.filter_by(state="En proceso").all()
+        print(voices, "all voices")
         for voice in voices:
             unprocessed_route = route + "/unprocessed/" + voice.filename
             f_no_extension = voice.filename.split(".")[0]
