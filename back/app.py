@@ -417,27 +417,28 @@ class ResourceVoiceUpdater(Resource):
         voices = Voice.query.filter_by(state="En proceso").all()
         print(voices, "all voices")
         for voice in voices:
-            unprocessed_route = route + "/originals/" + voice.filename
-            f_no_extension = voice.filename.split(".")[0]
-            processed_route = route + "/processed/" + f_no_extension + ".mp3"
-            print(voice, "la actual")
-            print(unprocessed_route, processed_route)
-            try:
-                command = f"sudo ffmpeg -i {unprocessed_route} {processed_route}"
-                os.system(command)
-            except:
-                print("except files")
-                exit_message = "Something occurred whils processing the voie"
+            if voice.filename is not None:
+                unprocessed_route = route + "/originals/" + voice.filename
+                f_no_extension = voice.filename.split(".")[0]
+                processed_route = route + "/processed/" + f_no_extension + ".mp3"
+                print(voice, "la actual")
+                print(unprocessed_route, processed_route)
+                try:
+                    command = f"sudo ffmpeg -i {unprocessed_route} {processed_route}"
+                    os.system(command)
+                except:
+                    print("except files")
+                    exit_message = "Something occurred whils processing the voie"
 
 
-            voice.state = "Procesada"
-            message = "Su voz ha sido procesada"
-            db.session.commit()
-            try:
-                s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
-            except:
-                print("except mail")
-                exit_message = "Something happened whilst sending the mail"
+                voice.state = "Procesada"
+                message = "Su voz ha sido procesada"
+                db.session.commit()
+                try:
+                    s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
+                except:
+                    print("except mail")
+                    exit_message = "Something happened whilst sending the mail"
         
         s.quit()
         return exit_message
