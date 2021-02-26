@@ -442,6 +442,7 @@ class ResourceVoiceUpdater(Resource):
                     exit_message = "Something happened whilst sending the mail"
             else: 
                 voice.state = "Procesada"
+                db.session.commit()
 
         s.quit()
         return exit_message
