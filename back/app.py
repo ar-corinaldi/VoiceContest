@@ -439,7 +439,9 @@ class ResourceVoiceUpdater(Resource):
                 except:
                     print("except mail")
                     exit_message = "Something happened whilst sending the mail"
-        
+            else: 
+                voice.state = "Procesada"
+
         s.quit()
         return exit_message
 
