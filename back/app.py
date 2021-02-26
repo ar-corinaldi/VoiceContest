@@ -415,7 +415,8 @@ class ResourceVoiceUpdater(Resource):
         s.starttls()
         s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
         voices = Voice.query.filter_by(state="En proceso").all()
-        print(len(voices), "Size")
+        length = len(voices)
+        # print(len(voices), "Size")
         for voice in voices:
             # print(voice.__dict__)
             if voice.filename is not None:
@@ -445,6 +446,7 @@ class ResourceVoiceUpdater(Resource):
                 db.session.commit()
 
         s.quit()
+        print(length, "Size")
         return exit_message
 
 
