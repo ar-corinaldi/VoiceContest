@@ -417,13 +417,13 @@ class ResourceVoiceUpdater(Resource):
         voices = Voice.query.filter_by(state="En proceso").all()
         print(voices, "all voices")
         for voice in voices:
-            print(voice.__dict__)
+            # print(voice.__dict__)
             if voice.filename is not None:
                 unprocessed_route = route + "/originals/" + voice.filename
                 f_no_extension = voice.filename.split(".")[0]
                 processed_route = route + "/processed/" + f_no_extension + ".mp3"
-                print(voice, "la actual")
-                print(unprocessed_route, processed_route)
+                # print(voice, "la actual")
+                # print(unprocessed_route, processed_route)
                 try:
                     command = f"sudo ffmpeg -i {unprocessed_route} {processed_route}"
                     os.system(command)
