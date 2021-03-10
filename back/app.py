@@ -37,7 +37,7 @@ def identity(payload):
 
 
 app = Flask(__name__, static_folder=os.path.dirname(__file__))
-
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024    # 50 Mb limit
 mail = Mail(app)  # instantiate the mail class
 
 # configuration of mail
@@ -170,6 +170,8 @@ def getVoiceConverted(id_contest, id_voice):
         related_contest_id=id_contest, id=id_voice).first()
     print(voice.filename, "SI")
     extension = voice.filename.split(".")[1]
+    print(voice.transformed_voice_file_path, "PRINT 2")
+    print(voice.original_voice_file_path.replace(extension, "mp3"))
     return send_file(voice.transformed_voice_file_path, mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename.replace(extension, "mp3"))
 
 
@@ -364,10 +366,10 @@ class ResourseOneVoice(Resource):
         return result
 
     def put(self, id_contest, id_voice):
+        print(id_contest, id_voice)
         voice = Voice.query.filter_by(
             related_contest_id=id_contest, id=id_voice).first()
 
-        print(request.files)
         if 'audio_file' not in request.files:
             return {'error': 'file not found'}
         file = request.files.get('audio_file')
@@ -390,6 +392,7 @@ class ResourseOneVoice(Resource):
             print(transformed_file_path)
             file.save(original_file_path)
             file.save(unprocessed_file_path)
+            # file.save(transformed_file_path)
             voice.original_voice_file_path = original_file_path
             voice.transformed_voice_file_path = transformed_file_path
             voice.filename = prefix + filename
@@ -410,27 +413,45 @@ class ResourseOneVoice(Resource):
 
 class ResourceVoiceUpdater(Resource):
     def get(self):
+        exit_message = "OK"
+        route = "/home/estudiante/VoiceContest/back"
         s = smtplib.SMTP('smtp.gmail.com', 587)
         s.starttls()
         s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
         voices = Voice.query.filter_by(state="En proceso").all()
-        # print(voices, "las voces")
-        # orderedListVoices = posts_voice_schema.dump(voices)
-        # print(orderedListVoices, "después del dump")
+        length = len(voices)
+        # print(len(voices), "Size")
         for voice in voices:
-            print(voice, "la actual")
-            print(voice.__dict__, "actual dict")
-            voice.state = "Procesada"
-            message = "Su voz ha sido procesada"
-            db.session.commit()
-            try:
-                s.sendmail("voice.contest.cloud@gmail.com",
-                           voice.email, message)
-            except:
-                print("Something happened whilst sending the mail")
+            # print(voice.__dict__)
+            if voice.filename is not None:
+                unprocessed_route = route + "/originals/" + voice.filename
+                f_no_extension = voice.filename.split(".")[0]
+                processed_route = route + "/processed/" + f_no_extension + ".mp3"
+                # print(voice, "la actual")
+                # print(unprocessed_route, processed_route)
+                try:
+                    command = f"sudo ffmpeg -i {unprocessed_route} {processed_route}"
+                    os.system(command)
+                except:
+                    print("except files")
+                    exit_message = "Something occurred whils processing the voie"
+
+                voice.state = "Procesada"
+                message = "Su voz ha sido procesada"
+                db.session.commit()
+                try:
+                    s.sendmail("voice.contest.cloud@gmail.com",
+                               voice.email, message)
+                except:
+                    print("except mail")
+                    exit_message = "Something happened whilst sending the mail"
+            else:
+                voice.state = "Procesada"
+                db.session.commit()
 
         s.quit()
-        return "result"
+        print(length, "Size")
+        return exit_message
 
 
 api.add_resource(ResourceListUsers, '/users')
