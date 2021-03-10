@@ -20,6 +20,9 @@ from flask_mail import Mail, Message
 from os import listdir
 from os.path import isfile, join
 import smtplib
+import boto3
+import requests
+from botocore.exceptions import ClientError
 
 
 def authenticate(username, password):
@@ -409,6 +412,30 @@ class ResourseOneVoice(Resource):
 
 class ResourceVoiceUpdater(Resource):
     def get(self):
+        SENDER = "voice.contest.cloud@gmail.com"
+        RECIPIENT = "da.babativa@uniandes.edu.co"
+        AWS_REGION = "us-east-2"
+        SUBJECT = "Voz Convertida"
+        BODY_TEXT = ("Su voz ha sido convertida\r\n"
+                    "Puede iniciar sesión para escucharla online en la plataforma"
+                    )
+        CHARSET = "UTF-8"
+
+        client = boto3.client('ses',region_name=AWS_REGION)
+
+
+        message = {
+                    'Body': {
+                        'Text': {
+                            'Charset': CHARSET,
+                            'Data': BODY_TEXT,
+                        },
+                    },
+                    'Subject': {
+                        'Charset': CHARSET,
+                        'Data': SUBJECT,
+                    },
+                }
         exit_message = "OK"
         route = "/home/estudiante/VoiceContest/back"
         s = smtplib.SMTP('smtp.gmail.com', 587)
@@ -437,10 +464,21 @@ class ResourceVoiceUpdater(Resource):
                 message = "Su voz ha sido procesada"
                 db.session.commit()
                 try:
-                    s.sendmail("voice.contest.cloud@gmail.com",voice.email, message)
-                except:
-                    print("except mail")
-                    exit_message = "Something happened whilst sending the mail"
+                    response = client.send_email(
+                        Destination={
+                            'ToAddresses': [
+                                voice.email,
+                            ],
+                        },
+                        Message = message,
+                        
+                        Source=SENDER,
+                    )
+                except ClientError as e:
+                    print(e.response['Error']['Message'])
+                else:
+                    print("Email sent! Message ID:"),
+                    print(response['MessageId'])
             else: 
                 voice.state = "Procesada"
                 db.session.commit()
