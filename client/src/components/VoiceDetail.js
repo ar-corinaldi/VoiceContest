@@ -13,8 +13,8 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
     try {
       ENDPOINT =
         process.env.NODE_ENV === "production"
-          ? `http://172.24.98.143/${contest.id}/${voice.id}`
-          : `http://172.24.98.143:4000/${contest.id}/${voice.id}`;
+          ? `${process.env.REACT_APP_URL_ENDPOINTS_PROD}/${contest.id}/${voice.id}`
+          : `${process.env.REACT_APP_URL_ENDPOINTS_TEST}/${contest.id}/${voice.id}`;
       console.log(ENDPOINT);
     } finally {
       setIsLoading(false);
@@ -72,23 +72,16 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
             >
               Descargar Original
             </Button>
-            {voice.state !== "En proceso" && (
-              <Button
-                onClick={descargaConvertida}
-                className="btn btn-secondary"
-              >
-                Descargar Convertida
-              </Button>
-            )}
-            {voice.state === "En proceso" &&
-              "Actualmente estamos procesando su voz! Espere aproximadamente unos 15 minutos"}
+            <Button onClick={descargaConvertida} className="btn btn-secondary">
+              Descargar Convertida
+            </Button>
           </div>
           {isLoading && (
             <div class="spinner-border" role="status">
               <span class="sr-only">Loading...</span>
             </div>
           )}
-          {!isLoading && voice.state !== "En proceso" && (
+          {!isLoading && (
             <audio controls>
               <source
                 id="original"

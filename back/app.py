@@ -20,6 +20,9 @@ from flask_mail import Mail, Message
 from os import listdir
 from os.path import isfile, join
 import smtplib
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 
 def authenticate(username, password):
@@ -47,8 +50,12 @@ app.config['MAIL_USE_SSL'] = True
 mail = Mail(app)
 app.config['SECRET_KEY'] = 'super-secret'
 # sqlite:///test.db
-# postgresql://postgres@172.24.98.83:5432/voice_contest_db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
+print(app.config['ENV'])
+if app.config['ENV'] == 'production':
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DB_URL_PROD')
+else:
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DB_URL_TEST')
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db = SQLAlchemy(app)
@@ -163,7 +170,7 @@ def getVoiceConverted(id_contest, id_voice):
         related_contest_id=id_contest, id=id_voice).first()
     print(voice.filename, "SI")
     extension = voice.filename.split(".")[1]
-    return send_file(voice.original_voice_file_path.replace(extension, "mp3"), mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename.replace(extension, "mp3"))
+    return send_file(voice.transformed_voice_file_path, mimetype="audio/mpeg", as_attachment=True, attachment_filename=voice.filename.replace(extension, "mp3"))
 
 
 @app.route("/<int:id_contest>/getLenVoices")
@@ -379,6 +386,8 @@ class ResourseOneVoice(Resource):
             transformed_file_path = os.path.join(
                 app.config['PROCESSED_FOLDER'], prefix + filename.split(".")[0] + ".mp3")
 
+            print(original_file_path)
+            print(transformed_file_path)
             file.save(original_file_path)
             file.save(unprocessed_file_path)
             voice.original_voice_file_path = original_file_path
