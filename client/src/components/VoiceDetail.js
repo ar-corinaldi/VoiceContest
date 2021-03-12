@@ -5,23 +5,21 @@ import { doFetch } from "../utils/useFetch";
 
 let ENDPOINT;
 function VoiceDetail({ voice, page, idx, contest, setVoices }) {
-  const [originalAudioURL, setOriginalAudioURL] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { token } = useContext(AuthContext);
 
   useEffect(() => {
-    ENDPOINT =
-      process.env.NODE_ENV === "production"
-        ? `http://172.24.98.143/${contest.id}/${voice.id}/downloadVoiceOriginal`
-        : `http://172.24.98.143:4000/${contest.id}/${voice.id}/downloadVoiceOriginal`;
-	console.log(ENDPOINT);
-  }, [contest.id, voice.id]);
-
-  useEffect(() => {
-    if (voice && voice.state && voice.state.toLowerCase() === "convertida") {
+    setIsLoading(true);
+    try {
+      ENDPOINT =
+        process.env.NODE_ENV === "production"
+          ? `${process.env.REACT_APP_URL_ENDPOINTS_PROD}/${contest.id}/${voice.id}`
+          : `${process.env.REACT_APP_URL_ENDPOINTS_TEST}/${contest.id}/${voice.id}`;
+      console.log(ENDPOINT);
+    } finally {
+      setIsLoading(false);
     }
-    getAudio();
-  }, [voice]);
+  }, [contest.id, voice.id]);
 
   const onDelete = async () => {
     try {
@@ -32,24 +30,10 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
         token
       );
       if (!data.error) {
-        setVoices((prev) => prev.filter((cur) => cur !== voice.id));
+        setVoices((prev) => prev.filter((cur) => cur.id !== voice.id));
       }
     } catch (e) {
       console.log("error", e);
-    }
-  };
-  const getAudio = async () => {
-    try {
-      setIsLoading(true);
-      const res = await fetch(ENDPOINT);
-      console.log(res);
-      const audio = await res.blob();
-      let url = window.URL.createObjectURL(audio);
-      new Audio(audio);
-      setOriginalAudioURL(url);
-      console.log(url);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -61,10 +45,7 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
     console.log(audio);
 
     let aTag = document.createElement("a");
-    aTag.href =
-      process.env.NODE_ENV === "production"
-        ? `/home/estudiante/VoiceContest/back/processed/${voice.filename}`
-        : ENDPOINT;
+    aTag.href = `${ENDPOINT}/downloadVoiceConverted`;
 
     aTag.target = "_blank";
     aTag.click();
@@ -82,10 +63,7 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
                 // const res = await fetch(ENDPOINT);
                 // console.log(res);
                 let aTag = document.createElement("a");
-                aTag.href =
-                  process.env.NODE_ENV === "production"
-                    ? `/home/estudiante/VoiceContest/back/originals/${voice.filename}`
-                    : ENDPOINT;
+                aTag.href = `${ENDPOINT}/downloadVoiceOriginal`;
 
                 aTag.target = "_blank";
                 aTag.click();
@@ -107,11 +85,7 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
             <audio controls>
               <source
                 id="original"
-                src={
-                  process.env.NODE_ENV === "production"
-                    ? `/home/estudiante/VoiceContest/back/processed/${voice.filename}`
-                    : ENDPOINT
-                }
+                src={`${ENDPOINT}/downloadVoiceConverted`}
                 type="audio/mp3"
               />
             </audio>

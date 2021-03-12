@@ -1,20 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
-import {
-  Row,
-  Col,
-  Badge,
-  Descriptions,
-  Button,
-  Input,
-  Form,
-  Pagination,
-} from "antd";
+import { Row, Col, Descriptions, Button, Input, Form, Pagination } from "antd";
 import { Link, useParams, useHistory } from "react-router-dom";
 import { LoadingOutlined } from "@ant-design/icons";
 import { doFetch } from "../utils/useFetch";
 import { AuthContext } from "../App";
 import VoiceDetail from "../components/VoiceDetail";
-
+const layout = {
+  labelCol: { span: 8 },
+  wrapperCol: { span: 16 },
+};
 const ContestDetail = () => {
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -26,6 +20,7 @@ const ContestDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalVoices, setTotalVoices] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
   const { contestUrl } = useParams();
   const { token } = useContext(AuthContext);
   const history = useHistory();
@@ -84,7 +79,23 @@ const ContestDetail = () => {
     if (contest && contest.id) getVoices(contest.id);
   }, [contest, setIsLoading, setVoices, page]);
 
-  const onEdit = () => {};
+  const onEdit = async (values) => {
+    try {
+      const editedContest = await doFetch(
+        `/contests/${contestUrl}`,
+        "PUT",
+        values,
+        token
+      );
+      if (!editedContest.error) {
+        setContest(editedContest);
+      }
+    } catch (e) {
+      console.error("paila", e);
+    } finally {
+      setIsEditing(false);
+    }
+  };
 
   const onDelete = async () => {
     try {
@@ -123,14 +134,14 @@ const ContestDetail = () => {
         const ENDPOINT =
           process.env.NODE_ENV === "production"
             ? `http://172.24.98.143/contests/${contest.id}/voices/${data.id}`
-            : `http://172.24.98.143:4000/contests/${contest.id}/voices/${data.id}`;
-        console.log("ENDPOINT FETCH PUT:",ENDPOINT );
-	console.log(file, formData);
-	let res = await fetch(ENDPOINT, {
+            : `http://localhost:5000/contests/${contest.id}/voices/${data.id}`;
+        console.log("ENDPOINT FETCH PUT:", ENDPOINT);
+        console.log(file, formData);
+        let res = await fetch(ENDPOINT, {
           method: "PUT",
           body: formData,
         });
-	console.log("RESPONSE FETCH PUT:",res);
+        console.log("RESPONSE FETCH PUT:", res);
         let x = await res.json();
         setVoices((prevVoices) => [...prevVoices, x]);
       }
@@ -169,39 +180,70 @@ const ContestDetail = () => {
       </>
     );
   }
-  const changeFile = (ev) => {
-    console.log(ev.target.files);
-    setFile(ev.target.files[0]);
-  };
+
   return (
     <React.Fragment>
       <Row className="mt-4">
         <Col span={24}>
           {token && <Link to="/">Ir a Concursos</Link>}
-          <Descriptions title="Información del Concurso" bordered>
-            <Descriptions.Item label="Nombre">{contest.name}</Descriptions.Item>
-            <Descriptions.Item label="Pago">
-              {contest.payment}
-            </Descriptions.Item>
-            <Descriptions.Item label="Fecha Inicial" span={6}>
-              {contest.start_date}
-            </Descriptions.Item>
-            <Descriptions.Item label="Fecha Final" span={6}>
-              {contest.finish_date}
-            </Descriptions.Item>
-            <Descriptions.Item label="Guión" span={6}>
-              {contest.script}
-            </Descriptions.Item>
-            <Descriptions.Item label="Recomendaciones" span={6}>
-              {contest.recommendations}
-            </Descriptions.Item>
-          </Descriptions>
+          {!isEditing && (
+            <Descriptions title="Información del Concurso" bordered>
+              <Descriptions.Item label="Nombre">
+                {contest.name}
+              </Descriptions.Item>
+              <Descriptions.Item label="Pago">
+                {contest.payment}
+              </Descriptions.Item>
+              <Descriptions.Item label="Fecha Inicial" span={6}>
+                {contest.start_date}
+              </Descriptions.Item>
+              <Descriptions.Item label="Fecha Final" span={6}>
+                {contest.finish_date}
+              </Descriptions.Item>
+              <Descriptions.Item label="Guión" span={6}>
+                {contest.script}
+              </Descriptions.Item>
+              <Descriptions.Item label="Recomendaciones" span={6}>
+                {contest.recommendations}
+              </Descriptions.Item>
+            </Descriptions>
+          )}
+          {isEditing && (
+            <Form {...layout} validateMessages onFinish={onEdit}>
+              <Form.Item name="name" label="Nombre">
+                <Input />
+              </Form.Item>
+              <Form.Item name="payment" label="Pago">
+                <Input type="number" />
+              </Form.Item>
+              <Form.Item name="start_date" label="Fecha Inicial">
+                <Input type="datetime-local" />
+              </Form.Item>
+              <Form.Item name="finish_date" label="Fecha Final">
+                <Input type="datetime-local" />
+              </Form.Item>
+              <Form.Item name="banner_path" label="Banner">
+                <Input />
+              </Form.Item>
+              <Form.Item name="script" label="Guión">
+                <Input />
+              </Form.Item>
+              <Form.Item name="recommendations" label="Recomendaciones">
+                <Input />
+              </Form.Item>
+              <Form.Item wrapperCol={{ offset: 8 }}>
+                <Button type="primary" htmlType="submit">
+                  Submit
+                </Button>
+              </Form.Item>
+            </Form>
+          )}
         </Col>
       </Row>
       <Row justify="center" hidden={!token}>
         <Col className="p-3">
-          <Button type="primary" onClick={onEdit}>
-            Editar
+          <Button type="primary" onClick={() => setIsEditing(!isEditing)}>
+            {isEditing ? "Dejar de editar" : "Editar"}
           </Button>
         </Col>
         <Col className="p-3">
@@ -251,7 +293,7 @@ const ContestDetail = () => {
             </Form.Item>
             <Form.Item
               name={"observation_message"}
-              label="Obervaciones"
+              label="Observaciones"
               onChange={(e) => setObservaciones(e.target.value)}
               rules={[{ required: true }]}
             >
