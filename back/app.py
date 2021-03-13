@@ -23,6 +23,9 @@ import smtplib
 import boto3
 import requests
 from botocore.exceptions import ClientError
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
 
 
 def authenticate(username, password):
@@ -38,10 +41,10 @@ def identity(payload):
 
 app = Flask(__name__, static_folder=os.path.dirname(__file__))
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024    # 50 Mb limit
-mail = Mail(app) # instantiate the mail class 
-   
-# configuration of mail 
-app.config['MAIL_SERVER']='smtp.gmail.com'
+mail = Mail(app)  # instantiate the mail class
+
+# configuration of mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USERNAME'] = 'voice.contest.cloud@gmail.com'
 app.config['MAIL_PASSWORD'] = 'Cl0ud123'
@@ -50,8 +53,12 @@ app.config['MAIL_USE_SSL'] = True
 mail = Mail(app)
 app.config['SECRET_KEY'] = 'super-secret'
 # sqlite:///test.db
-# postgresql://postgres@172.24.98.83:5432/voice_contest_db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres@172.24.98.83:5432/voice_contest_db'
+print(app.config['ENV'])
+if app.config['ENV'] == 'production':
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DB_URL_PROD')
+else:
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DB_URL_TEST')
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
 db = SQLAlchemy(app)
@@ -163,8 +170,8 @@ def downloadVoice(id_contest, id_voice):
 def getVoiceConverted(id_contest, id_voice):
     print("ACAAAAA")
     voice = Voice.query.filter_by(
-            related_contest_id=id_contest, id=id_voice).first()
-    print(voice.filename,"SI")
+        related_contest_id=id_contest, id=id_voice).first()
+    print(voice.filename, "SI")
     extension = voice.filename.split(".")[1]
     print(voice.transformed_voice_file_path, "PRINT 2")
     print(voice.original_voice_file_path.replace(extension, "mp3"))
@@ -292,11 +299,9 @@ class ResourseOneContest(Resource):
         if 'banner_path' in request.json:
             contest.banner_path = request.json['banner_path']
         if 'start_date' in request.json:
-            contest.start_date = datetime.strptime(
-                request.json['start_date'], '%Y-%m-%d %H:%M:%S.%f').date()
+            contest.start_date = request.json['start_date']
         if 'finish_date' in request.json:
-            contest.finish_date = datetime.strptime(
-                request.json['finish_date'], '%Y-%m-%d %H:%M:%S.%f').date()
+            contest.start_date = request.json['finish_date']
         if 'payment' in request.json:
             contest.payment = request.json['payment']
         if 'script' in request.json:
@@ -377,7 +382,6 @@ class ResourseOneVoice(Resource):
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             prefix = str(id_contest) + "_" + str(id_voice) + "_"
-
             original_file_path = os.path.join(
                 app.config['ORIGINALS_FOLDER'],  prefix + filename)
 
@@ -386,15 +390,15 @@ class ResourseOneVoice(Resource):
 
             transformed_file_path = os.path.join(
                 app.config['PROCESSED_FOLDER'], prefix + filename.split(".")[0] + ".mp3")
-            print(transformed_file_path)
 
+            print(original_file_path)
+            print(transformed_file_path)
             file.save(original_file_path)
             file.save(unprocessed_file_path)
-            #file.save(transformed_file_path)
+            # file.save(transformed_file_path)
             voice.original_voice_file_path = original_file_path
             voice.transformed_voice_file_path = transformed_file_path
             voice.filename = prefix + filename
-            print(voice.filename,"PRINT EN EL PUT")
             flash('File successfully uploaded')
         else:
             return {"error": "File format is not acceptable"}, 412
@@ -417,25 +421,24 @@ class ResourceVoiceUpdater(Resource):
         AWS_REGION = "us-east-2"
         SUBJECT = "Voz Convertida"
         BODY_TEXT = ("Su voz ha sido convertida\r\n"
-                    "Puede iniciar sesión para escucharla online en la plataforma"
-                    )
+                     "Puede iniciar sesión para escucharla online en la plataforma"
+                     )
         CHARSET = "UTF-8"
 
-        client = boto3.client('ses',region_name=AWS_REGION)
-
+        client = boto3.client('ses', region_name=AWS_REGION)
 
         message = {
-                    'Body': {
-                        'Text': {
-                            'Charset': CHARSET,
-                            'Data': BODY_TEXT,
-                        },
-                    },
-                    'Subject': {
-                        'Charset': CHARSET,
-                        'Data': SUBJECT,
-                    },
-                }
+            'Body': {
+                'Text': {
+                    'Charset': CHARSET,
+                    'Data': BODY_TEXT,
+                },
+            },
+            'Subject': {
+                'Charset': CHARSET,
+                'Data': SUBJECT,
+            },
+        }
         exit_message = "OK"
         route = "/home/estudiante/VoiceContest/back"
         s = smtplib.SMTP('smtp.gmail.com', 587)
@@ -459,27 +462,17 @@ class ResourceVoiceUpdater(Resource):
                     print("except files")
                     exit_message = "Something occurred whils processing the voie"
 
-
                 voice.state = "Procesada"
                 message = "Su voz ha sido procesada"
                 db.session.commit()
                 try:
-                    response = client.send_email(
-                        Destination={
-                            'ToAddresses': [
-                                voice.email,
-                            ],
-                        },
-                        Message = message,
-                        
-                        Source=SENDER,
-                    )
-                except ClientError as e:
-                    print(e.response['Error']['Message'])
-                else:
-                    print("Email sent! Message ID:"),
-                    print(response['MessageId'])
-            else: 
+
+                    s.sendmail("voice.contest.cloud@gmail.com",
+                               voice.email, message)
+                except:
+                    print("except mail")
+                    exit_message = "Something happened whilst sending the mail"
+            else:
                 voice.state = "Procesada"
                 db.session.commit()
 
@@ -500,5 +493,5 @@ api.add_resource(ResourceVoiceUpdater, '/update-processed')
 
 if __name__ == '__main__':
     db.create_all()
-    #manager.run()
+    # manager.run()
     app.run(debug=True, use_reloader=True)

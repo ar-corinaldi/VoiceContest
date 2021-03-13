@@ -1,8 +1,8 @@
 export async function doFetch(url = "", method = "GET", body, token) {
-  let URL = `http://172.24.98.143:4000${url}`;
+  let URL = `${process.env.REACT_APP_URL_ENDPOINTS_TEST}${url}`;
   console.log(process.env.NODE_ENV);
   if (process.env.NODE_ENV === "production") {
-    URL = `http://172.24.98.143${url}`;
+    URL = `${process.env.REACT_APP_URL_ENDPOINTS_PROD}${url}`;
   }
   try {
     const CREDENTIALS = `JWT ${token}`;
