@@ -133,8 +133,8 @@ const ContestDetail = () => {
         formData.append("audio_file", file);
         const ENDPOINT =
           process.env.NODE_ENV === "production"
-            ? `http://172.24.98.143/contests/${contest.id}/voices/${data.id}`
-            : `http://localhost:5000/contests/${contest.id}/voices/${data.id}`;
+            ? `${process.env.REACT_APP_URL_ENDPOINTS_PROD}/contests/${contest.id}/voices/${data.id}`
+            : `${process.env.REACT_APP_URL_ENDPOINTS_TEST}/contests/${contest.id}/voices/${data.id}`;
         console.log("ENDPOINT FETCH PUT:", ENDPOINT);
         console.log(file, formData);
         let res = await fetch(ENDPOINT, {
