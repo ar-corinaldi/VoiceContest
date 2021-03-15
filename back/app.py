@@ -416,69 +416,9 @@ class ResourseOneVoice(Resource):
 
 class ResourceVoiceUpdater(Resource):
     def get(self):
-        SENDER = "voice.contest.cloud@gmail.com"
-        RECIPIENT = "da.babativa@uniandes.edu.co"
-        AWS_REGION = "us-east-2"
-        SUBJECT = "Voz Convertida"
-        BODY_TEXT = ("Su voz ha sido convertida\r\n"
-                     "Puede iniciar sesión para escucharla online en la plataforma"
-                     )
-        CHARSET = "UTF-8"
-
-        client = boto3.client('ses', region_name=AWS_REGION)
-
-        message = {
-            'Body': {
-                'Text': {
-                    'Charset': CHARSET,
-                    'Data': BODY_TEXT,
-                },
-            },
-            'Subject': {
-                'Charset': CHARSET,
-                'Data': SUBJECT,
-            },
-        }
-        exit_message = "OK"
-        route = "/home/estudiante/VoiceContest/back"
-        s = smtplib.SMTP('smtp.gmail.com', 587)
-        s.starttls()
-        s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
         voices = Voice.query.filter_by(state="En proceso").all()
-        length = len(voices)
-        # print(len(voices), "Size")
-        for voice in voices:
-            # print(voice.__dict__)
-            if voice.filename is not None:
-                unprocessed_route = route + "/originals/" + voice.filename
-                f_no_extension = voice.filename.split(".")[0]
-                processed_route = route + "/processed/" + f_no_extension + ".mp3"
-                # print(voice, "la actual")
-                # print(unprocessed_route, processed_route)
-                try:
-                    command = f"sudo ffmpeg -i {unprocessed_route} {processed_route}"
-                    os.system(command)
-                except:
-                    print("except files")
-                    exit_message = "Something occurred whils processing the voie"
-
-                voice.state = "Procesada"
-                message = "Su voz ha sido procesada"
-                db.session.commit()
-                try:
-
-                    s.sendmail("voice.contest.cloud@gmail.com",
-                               voice.email, message)
-                except:
-                    print("except mail")
-                    exit_message = "Something happened whilst sending the mail"
-            else:
-                voice.state = "Procesada"
-                db.session.commit()
-
-        s.quit()
-        print(length, "Size")
-        return exit_message
+        orderedListVoices = posts_voice_schema.dump(voices.items)
+        return orderedListVoices
 
 
 api.add_resource(ResourceListUsers, '/users')
