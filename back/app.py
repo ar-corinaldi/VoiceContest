@@ -417,7 +417,7 @@ class ResourseOneVoice(Resource):
 class ResourceVoiceUpdater(Resource):
     def get(self):
         voices = Voice.query.filter_by(state="En proceso").all()
-        orderedListVoices = posts_voice_schema.dump(voices.items)
+        orderedListVoices = posts_voice_schema.dump(voices)
         return orderedListVoices
 
 
