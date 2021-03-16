@@ -417,6 +417,9 @@ class ResourseOneVoice(Resource):
 class ResourceVoiceUpdater(Resource):
     def get(self):
         voices = Voice.query.filter_by(state="En proceso").all()
+        for voice in voices:
+            voice.state = "Procesada"
+            db.session.commit()
         orderedListVoices = posts_voice_schema.dump(voices)
         return orderedListVoices
 
