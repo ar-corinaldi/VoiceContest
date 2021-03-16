@@ -1,9 +1,11 @@
 export async function doFetch(url = "/", method = "GET", body, token) {
-  let URL = `${process.env.REACT_APP_URL_ENDPOINTS_TEST}`;
+  let URL = `${process.env.REACT_APP_URL_ENDPOINTS_TEST}${url}`;
   console.log(process.env.NODE_ENV);
   if (process.env.NODE_ENV === "production") {
-    URL = `${process.env.REACT_APP_URL_ENDPOINTS_PROD}`;
+    URL = `${process.env.REACT_APP_URL_ENDPOINTS_PROD}${url}`;
+    
   }
+  console.log("URL FINAL: ", URL)
   try {
     const CREDENTIALS = `JWT ${token}`;
     const FETCH_URL = URL;
