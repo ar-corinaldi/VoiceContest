@@ -3,23 +3,23 @@ import { Col, Button } from "antd";
 import { AuthContext } from "../App";
 import { doFetch } from "../utils/useFetch";
 
-let ENDPOINT;
 function VoiceDetail({ voice, page, idx, contest, setVoices }) {
   const [isLoading, setIsLoading] = useState(false);
   const { token } = useContext(AuthContext);
-
+  const [endpoint, setEndpoint] = useState("");
   useEffect(() => {
     setIsLoading(true);
     try {
-      ENDPOINT =
+      setEndpoint(
         process.env.NODE_ENV === "production"
           ? `${process.env.REACT_APP_URL_ENDPOINTS_PROD}/${contest.id}/${voice.id}`
-          : `${process.env.REACT_APP_URL_ENDPOINTS_TEST}/${contest.id}/${voice.id}`;
-      console.log(ENDPOINT);
+          : `${process.env.REACT_APP_URL_ENDPOINTS_TEST}/${contest.id}/${voice.id}`
+      );
+      console.log(endpoint);
     } finally {
       setIsLoading(false);
     }
-  }, [contest.id, voice.id]);
+  }, [setEndpoint, contest.id, voice.id]);
 
   const onDelete = async () => {
     try {
@@ -38,15 +38,14 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
   };
 
   const descargaConvertida = async () => {
-    console.log(ENDPOINT);
-    const res = await fetch(ENDPOINT);
+    console.log(endpoint);
+    const res = await fetch(endpoint);
     console.log(res);
     const audio = await res.blob();
     console.log(audio);
 
     let aTag = document.createElement("a");
-    aTag.href = `${ENDPOINT}/downloadVoiceConverted`;
-
+    aTag.href = `${endpoint}/downloadVoiceConverted`;
     aTag.target = "_blank";
     aTag.click();
   };
@@ -63,8 +62,7 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
                 // const res = await fetch(ENDPOINT);
                 // console.log(res);
                 let aTag = document.createElement("a");
-                aTag.href = `${ENDPOINT}/downloadVoiceOriginal`;
-
+                aTag.href = `${endpoint}/downloadVoiceOriginal`;
                 aTag.target = "_blank";
                 aTag.click();
               }}
@@ -76,16 +74,17 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
               Descargar Convertida
             </Button>
           </div>
-          {isLoading && (
-            <div class="spinner-border" role="status">
-              <span class="sr-only">Loading...</span>
-            </div>
-          )}
-          {!isLoading && (
+          {isLoading &&
+            !endpoint(
+              <div class="spinner-border" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+            )}
+          {!isLoading && endpoint && (
             <audio controls>
               <source
                 id="original"
-                src={`${ENDPOINT}/downloadVoiceConverted`}
+                src={`${endpoint}/downloadVoiceConverted`}
                 type="audio/mp3"
               />
             </audio>
