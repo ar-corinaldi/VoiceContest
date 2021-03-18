@@ -1,8 +1,9 @@
 import requests
+from dotenv import load_dotenv, find_dotenv
 
 try:
     print("pre")
-    r =requests.get('http://18.223.156.195/update-processed')
+    r =requests.get(f'http://104.154.109.18/update-processed')
     print("post")
     print(r)
 except:
