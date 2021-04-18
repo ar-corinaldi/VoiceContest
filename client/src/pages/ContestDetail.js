@@ -5,7 +5,7 @@ import { LoadingOutlined } from "@ant-design/icons";
 import { doFetch } from "../utils/useFetch";
 import { AuthContext } from "../App";
 import VoiceDetail from "../components/VoiceDetail";
-const layout = {
+const layout = { 
   labelCol: { span: 8 },
   wrapperCol: { span: 16 },
 };
