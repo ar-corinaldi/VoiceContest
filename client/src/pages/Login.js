@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import { Form, Input, Button, Row, Col, Modal } from "antd";
 import { AuthContext } from "../App";
+import { v4 } from "uuid";
 import { doFetch } from "../utils/useFetch";
 const layout = {
   labelCol: { span: 8 },
@@ -12,11 +13,12 @@ const tailLayout = {
 
 const Login = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [formInfo, setFormInfo] = useState({});
+  const [formInfo, setFormInfo] = useState({id: v4()});
   const { admin, setAdmin, setToken, token } = useContext(AuthContext);
   const onFinish = async (values) => {
     try {
       const data = await doFetch("/auth", "POST", values);
+      
       if (data.description === "Invalid credentials" || data.error) {
         setFormInfo(values);
         return showModal();
@@ -38,7 +40,6 @@ const Login = () => {
   const handleOk = async () => {
     setIsModalVisible(false);
     const data = await doFetch("/users", "POST", formInfo, token);
-
     if (data && !data.error) {
       onFinish(formInfo);
     }

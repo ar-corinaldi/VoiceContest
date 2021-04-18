@@ -4,6 +4,7 @@ import { Link, useParams, useHistory } from "react-router-dom";
 import { LoadingOutlined } from "@ant-design/icons";
 import { doFetch } from "../utils/useFetch";
 import { AuthContext } from "../App";
+import { v4 } from "uuid";
 import VoiceDetail from "../components/VoiceDetail";
 const layout = {
   labelCol: { span: 8 },
@@ -120,11 +121,11 @@ const ContestDetail = () => {
         last_name: lastName,
         email: email,
         observation_message: observaciones,
-      };
+      };  
       let data = await doFetch(
         `/contests/${contest.id}/voices/${page}`,
         "POST",
-        voice,
+        {...voice, id: v4()},
         token
       );
       console.log(data);
@@ -133,21 +134,20 @@ const ContestDetail = () => {
         formData.append("audio_file", file);
         const ENDPOINT =
           process.env.NODE_ENV === "production"
-            ? `${process.env.REACT_APP_URL_ENDPOINTS_PROD}/contests/${contest.id}/voices/${data.id}`
-            : `${process.env.REACT_APP_URL_ENDPOINTS_TEST}/contests/${contest.id}/voices/${data.id}`;
-        console.log("ENDPOINT FETCH PUT:", ENDPOINT);
-        console.log(file, formData);
+            ? `http://${process.env.REACT_APP_URL_ENDPOINTS_PROD}/contests/${contest.id}/voices/${data.id}`
+            : `http://${process.env.REACT_APP_URL_ENDPOINTS_TEST}/contests/${contest.id}/voices/${data.id}`;
+        console.log(ENDPOINT);
         let res = await fetch(ENDPOINT, {
           method: "PUT",
           body: formData,
         });
-        console.log("RESPONSE FETCH PUT:", res);
+        console.log(res);
         let x = await res.json();
+        console.log(x);
         setVoices((prevVoices) => [...prevVoices, x]);
       }
     } catch (e) {
       console.error("error subiendo voz", e);
-    } finally {
     }
   }
 

@@ -1,13 +1,13 @@
 export async function doFetch(url = "/", method = "GET", body, token) {
-  let URL = `${process.env.REACT_APP_URL_ENDPOINTS_TEST}${url}`;
+  let URL = `http://${process.env.REACT_APP_URL_ENDPOINTS_TEST}${url}`;
   console.log(process.env.NODE_ENV);
   if (process.env.NODE_ENV === "production") {
-    URL = `${process.env.REACT_APP_URL_ENDPOINTS_PROD}${url}`;
+    URL = `http://${process.env.REACT_APP_URL_ENDPOINTS_PROD}${url}`;
     
   }
   console.log("URL FINAL: ", URL)
   try {
-    const CREDENTIALS = `JWT ${token}`;
+    const CREDENTIALS = `Bearer ${token}`;
     const FETCH_URL = URL;
     const headers = new Headers();
     headers.append("Content-Type", "application/json");
@@ -39,6 +39,7 @@ export async function doFetch(url = "/", method = "GET", body, token) {
       throw new Error(await res.json().error);
     }
     const data = await res.json();
+    console.log(data);
     return data;
   } catch (e) {
     console.error("error", e);
