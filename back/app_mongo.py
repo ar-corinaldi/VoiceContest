@@ -25,9 +25,9 @@ import json
 
 load_dotenv(find_dotenv())
 
-
-s3 = boto3.client('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
-    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'))
+cloud_session = boto3.Session(profile_name='cloud')
+s3 = cloud_session.client('s3')
+sqs = cloud_session.client('sqs')
 
 app = Flask(__name__, static_folder=os.path.dirname(__file__))
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024    # 50 Mb limit
@@ -372,7 +372,12 @@ class ResourseOneVoice(Resource):
             return {"error": "File format is not acceptable"}, 412
         print(s3)
         s3.upload_fileobj(file, "voicecontest", 'originals/' + voice['filename'])
-
+        response = sqs.send_message(
+            QueueUrl=os.environ.get('AWS_SQS_URL'),
+            MessageBody='originals/' + voice['filename'],
+            MessageGroupId=id_contest + '_' + id_voice,
+            MessageDeduplicationId=id_contest + '_' + id_voice
+        )
         t_voices.update_one({
             'related_contest_id':id_contest, 'id':id_voice}, {"$set": voice})
         updated_voice = t_voices.find_one({
