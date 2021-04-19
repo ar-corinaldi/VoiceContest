@@ -3,8 +3,7 @@ flask-restful
 flask-sqlalchemy 
 sqlalchemy 
 flask-marshmallow 
-python-dateutil
-datetime 
+python-dateutil 
 flask-jwt 
 werkzeug 
 flask-cors 

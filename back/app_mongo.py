@@ -24,14 +24,15 @@ from bson import ObjectId, json_util
 import json
 
 load_dotenv(find_dotenv())
-
-cloud_session = boto3.Session(profile_name='cloud')
+cloud_session = boto3.Session(aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'), region_name='us-east-1')
 s3 = cloud_session.client('s3')
 sqs = cloud_session.client('sqs')
 
 app = Flask(__name__, static_folder=os.path.dirname(__file__))
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024    # 50 Mb limit
 mail = Mail(app)  # instantiate the mail class
+print(os.environ.get('DB_URL_MONGO'))
 con = MongoClient(os.environ.get('DB_URL_MONGO'),27017)
 db = con.get_database('VoiceContest')
 
