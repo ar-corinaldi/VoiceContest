@@ -8,10 +8,12 @@ export async function doFetch(url = "/", method = "GET", body, token) {
   console.log("URL FINAL: ", URL)
   try {
     const CREDENTIALS = `Bearer ${token}`;
+    console.log(CREDENTIALS);
     const FETCH_URL = URL;
     const headers = new Headers();
     headers.append("Content-Type", "application/json");
     let res;
+    console.log(body);
     if (method === "GET") {
       if (token) {
         const headers = new Headers();
@@ -27,6 +29,7 @@ export async function doFetch(url = "/", method = "GET", body, token) {
         body: JSON.stringify(body),
         headers,
       });
+      console.log(res);
     } else if (method === "DELETE") {
       if (token) {
         headers.append("Authorization", CREDENTIALS);
