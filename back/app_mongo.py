@@ -120,7 +120,7 @@ def login():
 
     x = t_users.find_one({"username": username})
     if x and x['password']==password:
-        access_token = create_access_token(identity=post_contest_schema.dump(parseJSON(x)))
+        access_token = create_access_token(identity=post_user_schema.dump(parseJSON(x)))
         return jsonify(message='Success', access_token=access_token), 201
     else:
         return jsonify(message="Bad Email or Password"), 401
@@ -193,6 +193,7 @@ class ResourseListContests(Resource):
     @jwt_required
     def post(self):
         current_identity = get_jwt_identity()
+        print(current_identity)
         if 'name' not in request.json:
             return {"error": "Contest name missing"}, 412
 
