@@ -120,6 +120,7 @@ def login():
 
     x = t_users.find_one({"username": username})
     if x and x['password']==password:
+        print(post_user_schema.dump(parseJSON(x)))
         access_token = create_access_token(identity=post_user_schema.dump(parseJSON(x)))
         return jsonify(message='Success', access_token=access_token), 201
     else:
@@ -152,8 +153,11 @@ class ResourceListUsers(Resource):
 class ResourceOneUser(Resource):
     @jwt_required
     def get(self):
+        print('entra')
         current_identity = get_jwt_identity()
+        print(current_identity)
         user = t_users.find_one({'id': current_identity['id']})
+        print(user)
         return post_user_schema.dump(parseJSON(user))
 
     @jwt_required
@@ -179,9 +183,11 @@ class ResourceOneUser(Resource):
 class ResourseListContests(Resource):
     @jwt_required
     def get(self):
+        print('entra contests')
         current_identity = get_jwt_identity()
-        print(current_identity)
+        print('current_identity',current_identity)
         contests = t_contests.find({'owner_id': current_identity['_id']})
+        print('contests', contests)
         ls = []
         for x in contests:
             ls.append(parseJSON(x))
@@ -192,8 +198,9 @@ class ResourseListContests(Resource):
 
     @jwt_required
     def post(self):
+        print('posting')
         current_identity = get_jwt_identity()
-        print(current_identity)
+        print('current_identity',current_identity)
         if 'name' not in request.json:
             return {"error": "Contest name missing"}, 412
 
