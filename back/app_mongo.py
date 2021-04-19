@@ -4,7 +4,7 @@ from flask_restful import Api, Resource
 from flask_marshmallow import Marshmallow
 from dateutil.parser import parse
 from datetime import datetime
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity, verify_jwt_in_request
 from flask_cors import CORS
 import base64
 import re
@@ -151,8 +151,8 @@ class ResourceListUsers(Resource):
 
 
 class ResourceOneUser(Resource):
-    @jwt_required
     def get(self):
+        verify_jwt_in_request()
         print('entra')
         current_identity = get_jwt_identity()
         print(current_identity)
@@ -160,8 +160,8 @@ class ResourceOneUser(Resource):
         print(user)
         return post_user_schema.dump(parseJSON(user))
 
-    @jwt_required
     def put(self):
+        verify_jwt_in_request()
         current_identity = get_jwt_identity()
         query = {'id': current_identity['id']}
         user = {}
@@ -173,16 +173,16 @@ class ResourceOneUser(Resource):
         t_users.update_one(query, {"$set": user})
         return post_user_schema.dump(parseJSON(user))
 
-    @jwt_required
     def delete(self):
+        verify_jwt_in_request()
         current_identity = get_jwt_identity()
         t_users.delete_one({'id': current_identity['id']})
         return "User deleted"
 
 
 class ResourseListContests(Resource):
-    @jwt_required
     def get(self):
+        verify_jwt_in_request()
         print('entra contests')
         current_identity = get_jwt_identity()
         print('current_identity',current_identity)
@@ -196,8 +196,10 @@ class ResourseListContests(Resource):
         #     unorderedListContest, key=lambda x: x['start_date'])
         return unorderedListContest
 
-    @jwt_required
+    
     def post(self):
+        verify_jwt_in_request()
+
         print('posting')
         current_identity = get_jwt_identity()
         print('current_identity',current_identity)
@@ -252,8 +254,9 @@ class ResourseOneContest(Resource):
             return {"error": "Can not find the contest"}, 404
         return result
 
-    @jwt_required
     def put(self, url_contest):
+        verify_jwt_in_request()
+
         current_identity = get_jwt_identity()
         u_contest = {}
         if 'name' in request.json:
@@ -276,8 +279,9 @@ class ResourseOneContest(Resource):
         t_contests.update_one(query, {"$set":u_contest})
         return post_contest_schema.dump(u_contest)
 
-    @jwt_required
     def delete(self, url_contest):
+        verify_jwt_in_request()
+
         current_identity = get_jwt_identity()
         t_contests.delete_one({
             'owner_id':current_identity['_id'], 'url':url_contest})
