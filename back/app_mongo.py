@@ -5,7 +5,6 @@ from flask_marshmallow import Marshmallow
 from dateutil.parser import parse
 from datetime import datetime
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
-from werkzeug.security import safe_str_cmp
 from flask_cors import CORS
 import base64
 import re
@@ -27,10 +26,13 @@ import json
 load_dotenv(find_dotenv())
 
 
+s3 = boto3.client('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'))
+
 app = Flask(__name__, static_folder=os.path.dirname(__file__))
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024    # 50 Mb limit
 mail = Mail(app)  # instantiate the mail class
-con = MongoClient('mongodb+srv://allan9899:hola1234@pensiondb-y5joy.mongodb.net/test?authSource=admin&replicaSet=PensionDB-shard-0&readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=true',27017)
+con = MongoClient(os.environ.get('DB_URL_MONGO'),27017)
 db = con.get_database('VoiceContest')
 
 t_users = db.get_collection('users')
@@ -335,7 +337,7 @@ class ResourseOneVoice(Resource):
         if 'audio_file' not in request.files:
             return {'error': 'file not found'}
         file = request.files.get('audio_file')
-
+        print(file.filename)
         if file.filename == '':
             flash('No file selected for uploading')
         if file and allowed_file(file.filename):
@@ -350,16 +352,15 @@ class ResourseOneVoice(Resource):
             transformed_file_path = os.path.join(
                 app.config['PROCESSED_FOLDER'], prefix + filename.split(".")[0] + ".mp3")
 
-            file.save(original_file_path)
-            file.save(unprocessed_file_path)
-            # file.save(transformed_file_path)
             voice['original_voice_file_path'] = original_file_path
             voice['transformed_voice_file_path'] = transformed_file_path
             voice['filename'] = prefix + filename
             flash('File successfully uploaded')
         else:
             return {"error": "File format is not acceptable"}, 412
-        print(voice)
+        print(s3)
+        s3.upload_fileobj(file, "voicecontest", 'originals/' + voice['filename'])
+
         t_voices.update_one({
             'related_contest_id':id_contest, 'id':id_voice}, {"$set": voice})
         updated_voice = t_voices.find_one({

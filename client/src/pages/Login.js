@@ -13,14 +13,14 @@ const tailLayout = {
 
 const Login = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [formInfo, setFormInfo] = useState({id: v4()});
+  const [formInfo, setFormInfo] = useState();
   const { admin, setAdmin, setToken, token } = useContext(AuthContext);
   const onFinish = async (values) => {
     try {
       const data = await doFetch("/auth", "POST", values);
       
       if (data.description === "Invalid credentials" || data.error) {
-        setFormInfo(values);
+        setFormInfo({...values, id: v4()});
         return showModal();
       }
       if (data.access_token) {
