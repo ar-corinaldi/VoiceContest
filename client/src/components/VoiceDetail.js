@@ -7,6 +7,9 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
   const [isLoading, setIsLoading] = useState(false);
   const { token } = useContext(AuthContext);
   const [endpoint, setEndpoint] = useState("");
+  console.log(process.env.REACT_APP_URL_ENDPOINTS_CLOUD);
+  console.log(process.env.REACT_APP_URL_ENDPOINTS_PROD); 
+
   useEffect(() => {
     setIsLoading(true);
     try {
@@ -62,7 +65,8 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
                 // const res = await fetch(ENDPOINT);
                 // console.log(res);
                 let aTag = document.createElement("a");
-                aTag.href = `${endpoint}/downloadVoiceOriginal`;
+                console.log(voice.filename);
+                aTag.href = `http://${process.env.REACT_APP_URL_ENDPOINTS_CLOUD}/originals/${voice.filename}`;
                 aTag.target = "_blank";
                 aTag.click();
               }}
