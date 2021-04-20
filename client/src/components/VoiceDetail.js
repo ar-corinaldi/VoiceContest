@@ -63,7 +63,7 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
                 // console.log(res);
                 let aTag = document.createElement("a");
                 console.log(voice.filename);
-                aTag.href = `https://voicecontest.s3.amazonaws.com/originals/${voice.filename}`;
+                aTag.href = `${process.env.CLOUD_FRONT_URL}/originals/${voice.filename}`;
                 aTag.target = "_blank";
                 aTag.click();
               }}
