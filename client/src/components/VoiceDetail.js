@@ -7,8 +7,6 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
   const [isLoading, setIsLoading] = useState(false);
   const { token } = useContext(AuthContext);
   const [endpoint, setEndpoint] = useState("");
-  console.log(process.env.REACT_APP_URL_ENDPOINTS_CLOUD);
-  console.log(process.env.REACT_APP_URL_ENDPOINTS_PROD); 
 
   useEffect(() => {
     setIsLoading(true);
@@ -41,14 +39,10 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
   };
 
   const descargaConvertida = async () => {
-    console.log(endpoint);
-    const res = await fetch(endpoint);
-    console.log(res);
-    const audio = await res.blob();
-    console.log(audio);
-
     let aTag = document.createElement("a");
-    aTag.href = `${endpoint}/downloadVoiceConverted`;
+    const no_extension_file = voice.filename.split(".")[0];
+
+    aTag.href = `${process.env.REACT_APP_URL_ENDPOINTS_CLOUD}/processed/${no_extension_file}.mp3`;
     aTag.target = "_blank";
     aTag.click();
   };
@@ -66,7 +60,7 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
                 // console.log(res);
                 let aTag = document.createElement("a");
                 console.log(voice.filename);
-                aTag.href = `http://${process.env.REACT_APP_URL_ENDPOINTS_CLOUD}/originals/${voice.filename}`;
+                aTag.href = `${process.env.REACT_APP_URL_ENDPOINTS_CLOUD}/originals/${voice.filename}`;
                 aTag.target = "_blank";
                 aTag.click();
               }}
@@ -88,7 +82,7 @@ function VoiceDetail({ voice, page, idx, contest, setVoices }) {
             <audio controls>
               <source
                 id="original"
-                src={`${endpoint}/downloadVoiceConverted`}
+                src={`${process.env.REACT_APP_URL_ENDPOINTS_CLOUD}/processed/${voice.filename.split(".")[0]}.mp3`}
                 type="audio/mp3"
               />
             </audio>
