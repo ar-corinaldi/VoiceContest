@@ -52,6 +52,7 @@ const FormEvent = ({ setContests }) => {
       recommendations,
       payment,
       url: v4(),
+      id: v4()
     };
     const newContest = await doFetch("/contests", "POST", contestData, token);
     setContests((prevContests) => [newContest, ...prevContests]);

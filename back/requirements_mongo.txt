@@ -1,0 +1,14 @@
+flask 
+flask-restful 
+flask-marshmallow 
+python-dateutil
+flask-cors 
+flask-mail 
+botocore
+requests
+boto3
+python-dotenv
+pymongo
+flask_jwt_extended
+bson
+dnspython

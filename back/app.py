@@ -20,6 +20,9 @@ from flask_mail import Mail, Message
 from os import listdir
 from os.path import isfile, join
 import smtplib
+import boto3
+import requests
+from botocore.exceptions import ClientError
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
@@ -413,45 +416,12 @@ class ResourseOneVoice(Resource):
 
 class ResourceVoiceUpdater(Resource):
     def get(self):
-        exit_message = "OK"
-        route = "/home/estudiante/VoiceContest/back"
-        s = smtplib.SMTP('smtp.gmail.com', 587)
-        s.starttls()
-        s.login("voice.contest.cloud@gmail.com", "Cl0ud123")
         voices = Voice.query.filter_by(state="En proceso").all()
-        length = len(voices)
-        # print(len(voices), "Size")
         for voice in voices:
-            # print(voice.__dict__)
-            if voice.filename is not None:
-                unprocessed_route = route + "/originals/" + voice.filename
-                f_no_extension = voice.filename.split(".")[0]
-                processed_route = route + "/processed/" + f_no_extension + ".mp3"
-                # print(voice, "la actual")
-                # print(unprocessed_route, processed_route)
-                try:
-                    command = f"sudo ffmpeg -i {unprocessed_route} {processed_route}"
-                    os.system(command)
-                except:
-                    print("except files")
-                    exit_message = "Something occurred whils processing the voie"
-
-                voice.state = "Procesada"
-                message = "Su voz ha sido procesada"
-                db.session.commit()
-                try:
-                    s.sendmail("voice.contest.cloud@gmail.com",
-                               voice.email, message)
-                except:
-                    print("except mail")
-                    exit_message = "Something happened whilst sending the mail"
-            else:
-                voice.state = "Procesada"
-                db.session.commit()
-
-        s.quit()
-        print(length, "Size")
-        return exit_message
+            voice.state = "Procesada"
+            db.session.commit()
+        orderedListVoices = posts_voice_schema.dump(voices)
+        return orderedListVoices
 
 
 api.add_resource(ResourceListUsers, '/users')

@@ -1,15 +1,19 @@
-export async function doFetch(url = "", method = "GET", body, token) {
-  let URL = `${process.env.REACT_APP_URL_ENDPOINTS_TEST}${url}`;
+export async function doFetch(url = "/", method = "GET", body, token) {
+  let URL = `http://${process.env.REACT_APP_URL_ENDPOINTS_TEST}${url}`;
   console.log(process.env.NODE_ENV);
   if (process.env.NODE_ENV === "production") {
-    URL = `${process.env.REACT_APP_URL_ENDPOINTS_PROD}${url}`;
+    URL = `http://${process.env.REACT_APP_URL_ENDPOINTS_PROD}${url}`;
+    
   }
+  console.log("URL FINAL: ", URL)
   try {
-    const CREDENTIALS = `JWT ${token}`;
+    const CREDENTIALS = `Bearer ${token}`;
+    console.log(CREDENTIALS);
     const FETCH_URL = URL;
     const headers = new Headers();
     headers.append("Content-Type", "application/json");
     let res;
+    console.log(body);
     if (method === "GET") {
       if (token) {
         const headers = new Headers();
@@ -25,6 +29,7 @@ export async function doFetch(url = "", method = "GET", body, token) {
         body: JSON.stringify(body),
         headers,
       });
+      console.log(res);
     } else if (method === "DELETE") {
       if (token) {
         headers.append("Authorization", CREDENTIALS);
@@ -37,6 +42,7 @@ export async function doFetch(url = "", method = "GET", body, token) {
       throw new Error(await res.json().error);
     }
     const data = await res.json();
+    console.log(data);
     return data;
   } catch (e) {
     console.error("error", e);
